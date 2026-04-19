@@ -38,3 +38,20 @@ export interface MonitoringSession {
   abnormal?: boolean;
   perIndex: Record<IndexKey, { status: IndexStatus; seed: number }>;
 }
+
+export type ZoneHealth = "good" | "moderate" | "poor";
+export type ZoneWater = "dry" | "ok" | "flooded";
+
+export interface ZoneAnalysis {
+  row: number;
+  col: number;
+  health: ZoneHealth;
+  water: ZoneWater;
+  issue?: string | null;
+  tip: string;
+}
+
+export interface FarmView {
+  zones: ZoneAnalysis[];
+  overallSummary: string;
+}

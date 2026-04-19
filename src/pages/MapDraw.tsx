@@ -53,7 +53,7 @@ function ringArea(coords: number[][]) {
 }
 
 export default function MapDraw() {
-  const { current, setCurrent } = useAnalysis();
+  const { current, setCurrent, loadFarmView } = useAnalysis();
   const navigate = useNavigate();
 
   const [geometry, setGeometry] = React.useState<PolygonGeometry | null>(
@@ -104,6 +104,7 @@ export default function MapDraw() {
         result,
         label: "My drawn field",
       });
+      void loadFarmView(geometry);
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {

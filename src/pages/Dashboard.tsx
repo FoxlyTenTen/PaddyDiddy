@@ -3,6 +3,7 @@ import { ImageDateBanner } from "@/components/dashboard/ImageDateBanner";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { IndexGallery } from "@/components/dashboard/IndexGallery";
 import { AnalysisBanner } from "@/components/dashboard/AnalysisBanner";
+import { Farm3DView } from "@/components/visuals/Farm3DView";
 
 export default function Dashboard() {
   return (
@@ -26,26 +27,30 @@ export default function Dashboard() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h2 className="text-lg font-semibold text-slate-900">
-              Field Index Monitoring
-            </h2>
-            <p className="text-sm text-slate-500">
-              Each index tells you something different about your paddy. Tap a
-              card for a larger view.
-            </p>
+        <Farm3DView />
+      </section>
+
+      <section className="flex flex-col gap-3">
+        <details className="group rounded-2xl bg-white p-4 ring-1 ring-slate-200/80 shadow-soft open:pb-5">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-slate-900">
+                Show raw index details
+              </h2>
+              <p className="text-xs text-slate-500">
+                The four satellite indices (NDVI, NDRE, NDWI, GCI) behind the
+                bird's-eye view. Useful if you want the raw signal.
+              </p>
+            </div>
+            <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 group-open:bg-padi-100 group-open:text-padi-700">
+              <span className="group-open:hidden">Expand</span>
+              <span className="hidden group-open:inline">Collapse</span>
+            </span>
+          </summary>
+          <div className="mt-4">
+            <IndexGallery />
           </div>
-          <div className="flex items-center gap-1 rounded-full bg-white p-1 text-xs font-medium text-slate-600 ring-1 ring-slate-200">
-            <button className="rounded-full bg-padi-600 px-3 py-1 text-white shadow-sm">
-              Grid
-            </button>
-            <button className="rounded-full px-3 py-1 text-slate-500">
-              Compare
-            </button>
-          </div>
-        </div>
-        <IndexGallery />
+        </details>
       </section>
     </div>
   );

@@ -10,7 +10,11 @@
       "Bash(py --version)",
       "Bash(python -m venv .venv)",
       "Bash(.venv/Scripts/python.exe -m pip install --upgrade pip)",
-      "Bash(.venv/Scripts/python.exe -m pip install -r requirements.txt)"
+      "Bash(.venv/Scripts/python.exe -m pip install -r requirements.txt)",
+      "Bash(npx tsc *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('gee.py'\\).read\\(\\)\\); ast.parse\\(open\\('main.py'\\).read\\(\\)\\); ast.parse\\(open\\('vertex_analyze.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('gee.py'\\).read\\(\\)\\); ast.parse\\(open\\('vertex_analyze.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('vertex_analyze.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")"
     ]
   }
 }

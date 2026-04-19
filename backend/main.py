@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 import gee
+import vertex_analyze
 
 load_dotenv()
 
@@ -78,6 +79,20 @@ class AnalyzeResponse(BaseModel):
     bounds: dict[str, Any]
 
 
+class ZoneAnalysis(BaseModel):
+    row: int
+    col: int
+    health: Literal["good", "moderate", "poor"]
+    water: Literal["dry", "ok", "flooded"]
+    issue: str | None = None
+    tip: str
+
+
+class FarmViewResponse(BaseModel):
+    zones: list[ZoneAnalysis]
+    overallSummary: str
+
+
 # ---------------------------------------------------------------------------
 # Routes
 # ---------------------------------------------------------------------------
@@ -108,3 +123,29 @@ def analyze(req: AnalyzeRequest) -> AnalyzeResponse:
             detail=f"Earth Engine request failed: {exc.__class__.__name__}: {exc}",
         )
     return AnalyzeResponse(**result)
+
+
+@app.post("/api/farm-view", response_model=FarmViewResponse)
+def farm_view(req: AnalyzeRequest) -> FarmViewResponse:
+    try:
+        scene = gee.prepare_scene(
+            req.geometry.model_dump(), req.start_date, req.end_date
+        )
+    except RuntimeError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=500,
+            detail=f"Earth Engine request failed: {exc.__class__.__name__}: {exc}",
+        )
+
+    try:
+        payload = vertex_analyze.analyze_zones(scene)
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc))
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(
+            status_code=502,
+            detail=f"Vertex AI request failed: {exc.__class__.__name__}: {exc}",
+        )
+    return FarmViewResponse(**payload)
