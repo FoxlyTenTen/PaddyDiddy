@@ -19,7 +19,7 @@ import gee
 
 GRID_ROWS = 4
 GRID_COLS = 4
-MODEL_NAME = "gemini-2.5-flash"
+MODEL_NAME = "gemini-2.5-pro"
 
 _initialized = False
 
@@ -90,7 +90,7 @@ You receive THREE kinds of evidence about the SAME field:
   (A) Four palette-coloured satellite index images (north is up):
         1. NDVI  — red=stressed/bare, green=vigorous canopy
         2. NDRE  — similar to NDVI, more sensitive to mid-growth stress
-        3. NDWI  — blue=standing water / saturated soil, brown=dry surface
+        3. LSWI  — blue=high moisture / saturated soil, brown=dry surface
         4. GCI   — dark green=chlorophyll-rich, pale=nitrogen shortage
   (B) Field-level mean value for each index with its healthy / moderate
       thresholds, so you know what "good" looks like numerically.
@@ -105,8 +105,8 @@ For each cell:
     Cross-check NDVI, NDRE and GCI against their thresholds. If two or
     more are below the 'moderate' cutoff, return 'poor'.
 - water:  'dry' | 'ok' | 'flooded'
-    Drive primarily from NDWI. 'flooded' when NDWI is clearly positive
-    for a paddy at its current stage; 'dry' when NDWI is below the
+    Drive primarily from LSWI. 'flooded' when LSWI is clearly positive
+    for a paddy at its current stage; 'dry' when LSWI is below the
     moderate cutoff.
 - issue:  short label (<= 5 words) for the biggest problem, or omit if healthy.
 - tip:    ONE plain-language sentence a farmer can act on this week.
@@ -189,6 +189,14 @@ def analyze_zones(scene: gee.Scene) -> dict[str, Any]:
         zone_means[key] = gee.zone_means(img, zones_fc, key)
         png_by_key[key] = gee.thumb_png_bytes(img, scene.geom, cfg)
 
+    # A cell is "covered" if at least one index returned a non-null mean for
+    # it — meaning the polygon actually overlaps that cell.
+    covered: set[tuple[int, int]] = set()
+    for key in gee.INDEX_CONFIG:
+        for z in zone_means.get(key, []):
+            if z["mean"] is not None:
+                covered.add((int(z["row"]), int(z["col"])))
+
     context_text = _build_context_text(field_means, zone_means)
 
     parts: list[Part] = [
@@ -220,6 +228,9 @@ def analyze_zones(scene: gee.Scene) -> dict[str, Any]:
             f"Vertex returned {len(zones)} zones, "
             f"expected {GRID_ROWS * GRID_COLS}."
         )
+
+    for z in zones:
+        z["covered"] = (int(z.get("row", 0)), int(z.get("col", 0))) in covered
 
     return {
         "zones": zones,

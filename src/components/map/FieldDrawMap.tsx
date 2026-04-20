@@ -6,11 +6,42 @@ import "leaflet-draw/dist/leaflet.draw.css";
 import type { PolygonGeometry } from "@/services/gee";
 import { cn } from "@/lib/utils";
 
+// leaflet-draw 1.0.4 ships a broken `readableArea` (uses an undeclared
+// `type` variable). The exception throws on every mousemove once the polygon
+// has any vertices, which silently aborts further vertex additions.
+const LG: any = (L as any).GeometryUtil;
+if (LG && !LG.__padiwatchPatched) {
+  LG.readableArea = function (
+    area: number,
+    isMetric: boolean | string[],
+    precision?: Record<string, number>
+  ): string {
+    const def = { km: 2, ha: 2, m: 0, mi: 2, ac: 2, yd: 0, ft: 0, nm: 2 };
+    const p = (L as any).Util.extend({}, def, precision);
+    const fmt = (n: number, d: number) => LG.formattedNumber(n, d);
+    if (isMetric) {
+      const u = Array.isArray(isMetric) ? isMetric : ["ha", "m"];
+      if (area >= 1_000_000 && u.indexOf("km") !== -1) return `${fmt(area * 1e-6, p.km)} km²`;
+      if (area >= 10_000 && u.indexOf("ha") !== -1) return `${fmt(area * 1e-4, p.ha)} ha`;
+      return `${fmt(area, p.m)} m²`;
+    }
+    const a = area / 0.836127;
+    if (a >= 3_097_600) return `${fmt(a / 3_097_600, p.mi)} mi²`;
+    if (a >= 4840) return `${fmt(a / 4840, p.ac)} ac`;
+    return `${fmt(a, p.yd)} yd²`;
+  };
+  LG.__padiwatchPatched = true;
+}
+
 interface FieldDrawMapProps {
   onChange: (geom: PolygonGeometry | null) => void;
   initial?: PolygonGeometry | null;
   height?: number | string;
   className?: string;
+}
+
+export interface FieldDrawMapHandle {
+  flyTo: (lat: number, lon: number, zoom?: number) => void;
 }
 
 const POLY_STYLE = {
@@ -28,15 +59,26 @@ function toGeoJSONFromLayer(layer: L.Polygon): PolygonGeometry {
   };
 }
 
-export function FieldDrawMap({
-  onChange,
-  initial,
-  height = 520,
-  className,
-}: FieldDrawMapProps) {
+export const FieldDrawMap = React.forwardRef<
+  FieldDrawMapHandle,
+  FieldDrawMapProps
+>(function FieldDrawMap(
+  { onChange, initial, height = 520, className }: FieldDrawMapProps,
+  ref
+) {
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const mapRef = React.useRef<L.Map | null>(null);
   const drawnRef = React.useRef<L.FeatureGroup | null>(null);
+
+  React.useImperativeHandle(
+    ref,
+    () => ({
+      flyTo: (lat: number, lon: number, zoom = 15) => {
+        mapRef.current?.flyTo([lat, lon], zoom, { duration: 0.8 });
+      },
+    }),
+    []
+  );
 
   // Keep onChange in a ref so the effect below stays mount-once.
   const onChangeRef = React.useRef(onChange);
@@ -159,4 +201,4 @@ export function FieldDrawMap({
       style={{ height }}
     />
   );
-}
+});

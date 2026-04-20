@@ -14,7 +14,18 @@
       "Bash(npx tsc *)",
       "Bash(python -c \"import ast; ast.parse\\(open\\('gee.py'\\).read\\(\\)\\); ast.parse\\(open\\('main.py'\\).read\\(\\)\\); ast.parse\\(open\\('vertex_analyze.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
       "Bash(python -c \"import ast; ast.parse\\(open\\('gee.py'\\).read\\(\\)\\); ast.parse\\(open\\('vertex_analyze.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
-      "Bash(python -c \"import ast; ast.parse\\(open\\('vertex_analyze.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")"
+      "Bash(python -c \"import ast; ast.parse\\(open\\('vertex_analyze.py'\\).read\\(\\)\\); print\\('syntax OK'\\)\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(python *)",
+      "Bash(npm --version)",
+      "Bash(npx vite *)",
+      "Bash(npm uninstall *)",
+      "Bash(pip show *)",
+      "WebSearch",
+      "WebFetch(domain:docs.cloud.google.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:googleapis.github.io)",
+      "Read(//c/Users/mohda/.claude/skills/**)"
     ]
   }
 }

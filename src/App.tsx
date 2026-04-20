@@ -4,6 +4,7 @@ import Dashboard from "@/pages/Dashboard";
 import IndexDetails from "@/pages/IndexDetails";
 import MonitoringHistory from "@/pages/MonitoringHistory";
 import MapDraw from "@/pages/MapDraw";
+import Optimize from "@/pages/Optimize";
 
 export default function App() {
   return (
@@ -13,6 +14,7 @@ export default function App() {
         <Route path="/map" element={<MapDraw />} />
         <Route path="/index/:indexKey" element={<IndexDetails />} />
         <Route path="/history" element={<MonitoringHistory />} />
+        <Route path="/optimize" element={<Optimize />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

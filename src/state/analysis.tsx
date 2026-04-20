@@ -1,7 +1,36 @@
 import * as React from "react";
 import type { AnalyzeResponse, PolygonGeometry } from "@/services/gee";
-import type { FarmView } from "@/types";
+import type {
+  AgentCardState,
+  AgentKey,
+  FarmImage,
+  FarmView,
+  OptimizationState,
+} from "@/types";
 import { fetchFarmView } from "@/services/farmView";
+import { fetchFarmImage } from "@/services/farmImage";
+import { streamOptimization } from "@/services/optimize";
+
+const AGENT_ORDER: AgentKey[] = [
+  "diagnosis",
+  "water_optimizer",
+  "nutrient_optimizer",
+  "roi",
+];
+
+function makeIdleAgents(): Record<AgentKey, AgentCardState> {
+  return AGENT_ORDER.reduce(
+    (acc, key) => {
+      acc[key] = { key, status: "idle", tools: [] };
+      return acc;
+    },
+    {} as Record<AgentKey, AgentCardState>
+  );
+}
+
+function makeIdleOptimization(): OptimizationState {
+  return { status: "idle", agents: makeIdleAgents() };
+}
 
 export interface AnalysisRecord {
   id: string;
@@ -19,6 +48,13 @@ interface Ctx {
   farmViewLoading: boolean;
   farmViewError: string | null;
   loadFarmView: (geometry: PolygonGeometry) => Promise<void>;
+  farmImage: FarmImage | null;
+  farmImageLoading: boolean;
+  farmImageError: string | null;
+  loadFarmImage: (geometry: PolygonGeometry) => Promise<void>;
+  optimization: OptimizationState;
+  runOptimization: (geometry: PolygonGeometry) => Promise<void>;
+  resetOptimization: () => void;
 }
 
 const AnalysisContext = React.createContext<Ctx | undefined>(undefined);
@@ -58,6 +94,18 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
   const [farmViewLoading, setFarmViewLoading] = React.useState(false);
   const [farmViewError, setFarmViewError] = React.useState<string | null>(null);
 
+  // The Nano Banana image is large (~hundreds of KB) so we keep it in
+  // memory only. A page reload requires re-clicking "Generate".
+  const [farmImage, setFarmImage] = React.useState<FarmImage | null>(null);
+  const [farmImageLoading, setFarmImageLoading] = React.useState(false);
+  const [farmImageError, setFarmImageError] = React.useState<string | null>(null);
+
+  // Optimization state is kept in memory only — the SSE stream is re-run
+  // whenever the user clicks Generate.
+  const [optimization, setOptimization] = React.useState<OptimizationState>(
+    () => makeIdleOptimization()
+  );
+
   const setFarmView = React.useCallback((fv: FarmView | null) => {
     setFarmViewState(fv);
     if (fv) {
@@ -75,9 +123,12 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       } else {
         window.localStorage.removeItem(STORAGE_KEY);
       }
-      // Any new analysis invalidates the previous farm view.
+      // Any new analysis invalidates the previous farm view + image.
       setFarmView(null);
       setFarmViewError(null);
+      setFarmImage(null);
+      setFarmImageError(null);
+      setOptimization(makeIdleOptimization());
     },
     [setFarmView]
   );
@@ -86,6 +137,9 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     setCurrent(null);
     setFarmView(null);
     setFarmViewError(null);
+    setFarmImage(null);
+    setFarmImageError(null);
+    setOptimization(makeIdleOptimization());
   }, [setCurrent, setFarmView]);
 
   const loadFarmView = React.useCallback(
@@ -107,6 +161,139 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
     [setFarmView]
   );
 
+  const loadFarmImage = React.useCallback(
+    async (geometry: PolygonGeometry) => {
+      setFarmImageLoading(true);
+      setFarmImageError(null);
+      try {
+        const fi = await fetchFarmImage(geometry);
+        setFarmImage(fi);
+        // The image endpoint also returns zone data — populate farmView
+        // so the labelled mini-map and other consumers get the latest.
+        setFarmView({ zones: fi.zones, overallSummary: fi.overallSummary });
+      } catch (err) {
+        setFarmImageError(
+          err instanceof Error ? err.message : "Farm image request failed"
+        );
+        setFarmImage(null);
+      } finally {
+        setFarmImageLoading(false);
+      }
+    },
+    [setFarmView]
+  );
+
+  const resetOptimization = React.useCallback(() => {
+    setOptimization(makeIdleOptimization());
+  }, []);
+
+  const runOptimization = React.useCallback(
+    async (geometry: PolygonGeometry) => {
+      const startedAt = Date.now();
+      setOptimization({
+        status: "preparing",
+        agents: makeIdleAgents(),
+        startedAt,
+      });
+
+      try {
+        await streamOptimization(geometry, {}, (event) => {
+          setOptimization((prev) => {
+            const agents = { ...prev.agents };
+            const next: OptimizationState = { ...prev, agents };
+            switch (event.type) {
+              case "run_started":
+                next.status = "preparing";
+                next.sessionId = event.session_id;
+                break;
+              case "scene_ready":
+                next.status = "running";
+                next.areaHa = event.area_ha;
+                next.imageDate = event.image_date;
+                next.fieldCenter = event.field_center;
+                break;
+              case "agent_started": {
+                const prior = agents[event.agent];
+                if (prior) {
+                  agents[event.agent] = {
+                    ...prior,
+                    status: "running",
+                    startedAt: event.ts,
+                  };
+                }
+                break;
+              }
+              case "tool_called": {
+                const prior = agents[event.agent];
+                if (prior) {
+                  agents[event.agent] = {
+                    ...prior,
+                    tools: [
+                      ...prior.tools,
+                      { tool: event.tool, args: event.args, ts: event.ts },
+                    ],
+                  };
+                }
+                break;
+              }
+              case "tool_result": {
+                const prior = agents[event.agent];
+                if (prior) {
+                  const tools = prior.tools.slice();
+                  for (let i = tools.length - 1; i >= 0; i--) {
+                    if (tools[i].tool === event.tool && !tools[i].preview) {
+                      tools[i] = { ...tools[i], preview: event.preview };
+                      break;
+                    }
+                  }
+                  agents[event.agent] = { ...prior, tools };
+                }
+                break;
+              }
+              case "agent_output": {
+                const prior = agents[event.agent];
+                if (prior) {
+                  agents[event.agent] = {
+                    ...prior,
+                    output: event.text,
+                  };
+                }
+                break;
+              }
+              case "agent_finished": {
+                const prior = agents[event.agent];
+                if (prior) {
+                  agents[event.agent] = {
+                    ...prior,
+                    status: "done",
+                    finishedAt: event.ts,
+                  };
+                }
+                break;
+              }
+              case "final":
+                next.status = "done";
+                next.finalResult = event.result;
+                break;
+              case "run_failed":
+                next.status = "error";
+                next.error = `${event.stage}: ${event.error}`;
+                break;
+            }
+            return next;
+          });
+        });
+      } catch (err) {
+        setOptimization((prev) => ({
+          ...prev,
+          status: "error",
+          error: err instanceof Error ? err.message : "Optimization failed",
+        }));
+      }
+    },
+    []
+  );
+
   const value = React.useMemo(
     () => ({
       current,
@@ -116,6 +303,13 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       farmViewLoading,
       farmViewError,
       loadFarmView,
+      farmImage,
+      farmImageLoading,
+      farmImageError,
+      loadFarmImage,
+      optimization,
+      runOptimization,
+      resetOptimization,
     }),
     [
       current,
@@ -125,6 +319,13 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       farmViewLoading,
       farmViewError,
       loadFarmView,
+      farmImage,
+      farmImageLoading,
+      farmImageError,
+      loadFarmImage,
+      optimization,
+      runOptimization,
+      resetOptimization,
     ]
   );
 

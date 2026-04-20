@@ -8,6 +8,7 @@ import {
   LifeBuoy,
   Leaf,
   Settings,
+  Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -15,6 +16,7 @@ const primary = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/map", label: "Draw Field", icon: PenLine },
   { to: "/history", label: "Monitoring History", icon: History },
+  { to: "/optimize", label: "Optimize Resources", icon: Sparkles },
 ];
 
 const soon: { label: string; icon: React.ComponentType<{ className?: string }> }[] = [

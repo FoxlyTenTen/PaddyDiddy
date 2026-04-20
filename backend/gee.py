@@ -1,6 +1,6 @@
 """Google Earth Engine integration for PadiWatch.
 
-Computes NDVI, NDRE, NDWI and GCI on a user-supplied polygon over a recent
+Computes NDVI, NDRE, LSWI and GCI on a user-supplied polygon over a recent
 Sentinel-2 Surface Reflectance composite, and returns Leaflet-compatible
 tile URLs plus per-index mean statistics.
 """
@@ -76,15 +76,15 @@ INDEX_CONFIG: dict[str, dict[str, Any]] = {
         "healthy_min": 0.35,
         "moderate_min": 0.2,
     },
-    "ndwi": {
-        # McFeeters NDWI — sensitive to water on the canopy / paddy surface.
-        "name": "NDWI",
-        "expression": "(B3 - B8) / (B3 + B8)",
+    "lswi": {
+        # LSWI — sensitive to leaf water content and soil moisture.
+        "name": "LSWI",
+        "expression": "(B8 - B11) / (B8 + B11)",
         "palette": ["78350f", "14b8a6", "1d4ed8"],
-        "min": -0.5,
-        "max": 0.5,
-        "healthy_min": -0.05,
-        "moderate_min": -0.2,
+        "min": -1.0,
+        "max": 1.0,
+        "healthy_min": 0.1,
+        "moderate_min": -0.1,
     },
     "gci": {
         "name": "GCI",
@@ -222,6 +222,7 @@ def build_indices(composite: "ee.Image") -> dict[str, "ee.Image"]:
                 "B4": composite.select("B4"),
                 "B5": composite.select("B5"),
                 "B8": composite.select("B8"),
+                "B11": composite.select("B11"),
             },
         ).rename(key)
     return imgs
@@ -242,6 +243,27 @@ def thumb_png_bytes(
             "min": cfg["min"],
             "max": cfg["max"],
             "palette": cfg["palette"],
+        }
+    )
+    resp = requests.get(url, timeout=60)
+    resp.raise_for_status()
+    return resp.content
+
+
+def rgb_thumb_png_bytes(
+    composite: "ee.Image",
+    geom: "ee.Geometry",
+    dimensions: int = 768,
+) -> bytes:
+    """Render a true-colour (B4=R, B3=G, B2=B) PNG thumbnail clipped to geom."""
+    rgb = composite.select(["B4", "B3", "B2"])
+    url = rgb.getThumbURL(
+        {
+            "region": geom,
+            "dimensions": dimensions,
+            "format": "png",
+            "min": 0,
+            "max": 3000,
         }
     )
     resp = requests.get(url, timeout=60)

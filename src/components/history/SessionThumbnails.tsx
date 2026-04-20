@@ -2,7 +2,7 @@ import type { MonitoringSession, IndexKey, IndexStatus } from "@/types";
 import { IndexHeatmapSVG } from "@/components/visuals/IndexHeatmapSVG";
 import { cn } from "@/lib/utils";
 
-const ORDER: IndexKey[] = ["ndvi", "ndre", "ndwi", "gci"];
+const ORDER: IndexKey[] = ["ndvi", "ndre", "lswi", "gci"];
 
 const BIAS: Record<IndexStatus, number> = {
   Healthy: 0.78,

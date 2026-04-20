@@ -15,7 +15,8 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { FieldDrawMap } from "@/components/map/FieldDrawMap";
+import { FieldDrawMap, type FieldDrawMapHandle } from "@/components/map/FieldDrawMap";
+import { LocationSearch } from "@/components/map/LocationSearch";
 import {
   analyzeField,
   checkHealth,
@@ -38,7 +39,7 @@ const STATUS_VARIANT: Record<
 const INDEX_LABEL: Record<IndexKey, string> = {
   ndvi: "Greenness",
   ndre: "Early stress",
-  ndwi: "Moisture",
+  lswi: "Moisture",
   gci: "Chlorophyll",
 };
 
@@ -53,7 +54,7 @@ function ringArea(coords: number[][]) {
 }
 
 export default function MapDraw() {
-  const { current, setCurrent, loadFarmView } = useAnalysis();
+  const { current, setCurrent } = useAnalysis();
   const navigate = useNavigate();
 
   const [geometry, setGeometry] = React.useState<PolygonGeometry | null>(
@@ -66,6 +67,7 @@ export default function MapDraw() {
   const [backendStatus, setBackendStatus] = React.useState<
     "unknown" | "ready" | "missing-project" | "offline"
   >("unknown");
+  const mapRef = React.useRef<FieldDrawMapHandle | null>(null);
 
   React.useEffect(() => {
     let cancelled = false;
@@ -104,7 +106,6 @@ export default function MapDraw() {
         result,
         label: "My drawn field",
       });
-      void loadFarmView(geometry);
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
@@ -125,7 +126,7 @@ export default function MapDraw() {
           </h1>
           <p className="text-sm text-slate-500">
             Trace the boundary of your paddy on the map, then run a live
-            Earth Engine analysis for NDVI, NDRE, NDWI and GCI.
+            Earth Engine analysis for NDVI, NDRE, LSWI and GCI.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -152,7 +153,7 @@ export default function MapDraw() {
 
       <div className="grid gap-5 lg:grid-cols-[1.65fr_1fr]">
         <Card className="overflow-hidden p-0">
-          <div className="flex items-center justify-between px-5 py-3">
+          <div className="flex items-center justify-between gap-3 px-5 py-3">
             <div className="flex items-center gap-2 text-sm font-medium text-slate-700">
               <MapPinned className="h-4 w-4 text-padi-700" />
               Tap the polygon tool on the map, then click points to trace your
@@ -164,8 +165,14 @@ export default function MapDraw() {
                 : "No polygon yet"}
             </div>
           </div>
-          <div className="px-5 pb-5">
+          <div className="px-5 pb-2">
+            <LocationSearch
+              onSelect={(r) => mapRef.current?.flyTo(r.lat, r.lon, 16)}
+            />
+          </div>
+          <div className="px-5 pb-5 pt-3">
             <FieldDrawMap
+              ref={mapRef}
               onChange={setGeometry}
               initial={current?.geometry ?? null}
               height={520}
@@ -342,7 +349,7 @@ export default function MapDraw() {
               </Step>
               <Step n="3">
                 GEE pulls the latest Sentinel-2 pass, cloud-masks it, and
-                computes NDVI / NDRE / NDWI / GCI inside your field.
+                computes NDVI / NDRE / LSWI / GCI inside your field.
               </Step>
               <Step n="4">
                 Tile URLs come back and your dashboard updates to show the

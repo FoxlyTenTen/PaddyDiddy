@@ -3,7 +3,7 @@ import { ImageDateBanner } from "@/components/dashboard/ImageDateBanner";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { IndexGallery } from "@/components/dashboard/IndexGallery";
 import { AnalysisBanner } from "@/components/dashboard/AnalysisBanner";
-import { Farm3DView } from "@/components/visuals/Farm3DView";
+import { FarmImageView } from "@/components/visuals/FarmImageView";
 
 export default function Dashboard() {
   return (
@@ -27,7 +27,7 @@ export default function Dashboard() {
       </section>
 
       <section className="flex flex-col gap-3">
-        <Farm3DView />
+        <FarmImageView />
       </section>
 
       <section className="flex flex-col gap-3">
@@ -38,9 +38,10 @@ export default function Dashboard() {
                 Show raw index details
               </h2>
               <p className="text-xs text-slate-500">
-                The four satellite indices (NDVI, NDRE, NDWI, GCI) behind the
+                The four satellite indices (NDVI, NDRE, LSWI, GCI) behind the
                 bird's-eye view. Useful if you want the raw signal.
               </p>
+
             </div>
             <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 group-open:bg-padi-100 group-open:text-padi-700">
               <span className="group-open:hidden">Expand</span>

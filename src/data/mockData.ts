@@ -52,12 +52,12 @@ export const indices: IndexInfo[] = [
     metric: "0.41 avg",
   },
   {
-    key: "ndwi",
-    name: "NDWI",
-    fullName: "Normalized Difference Water Index",
+    key: "lswi",
+    name: "LSWI",
+    fullName: "Land Surface Water Index",
     shortExplanation: "Moisture condition",
     longExplanation:
-      "NDWI shows how much moisture is in the paddy canopy and surface. In a flooded rice system this helps confirm even water coverage.",
+      "LSWI shows how much moisture is in the paddy canopy and surface. In a flooded rice system this helps confirm even water coverage.",
     whyItMatters:
       "Uneven moisture can mean drainage issues, leaks, or irrigation problems. Spotting dry patches early prevents yield loss.",
     status: "Healthy",
@@ -93,7 +93,7 @@ export const sessions: MonitoringSession[] = [
     perIndex: {
       ndvi: { status: "Healthy", seed: 11 },
       ndre: { status: "Moderate", seed: 27 },
-      ndwi: { status: "Healthy", seed: 42 },
+      lswi: { status: "Healthy", seed: 42 },
       gci: { status: "Needs Attention", seed: 73 },
     },
   },
@@ -104,7 +104,7 @@ export const sessions: MonitoringSession[] = [
     perIndex: {
       ndvi: { status: "Healthy", seed: 108 },
       ndre: { status: "Healthy", seed: 114 },
-      ndwi: { status: "Healthy", seed: 121 },
+      lswi: { status: "Healthy", seed: 121 },
       gci: { status: "Moderate", seed: 133 },
     },
   },
@@ -115,7 +115,7 @@ export const sessions: MonitoringSession[] = [
     perIndex: {
       ndvi: { status: "Moderate", seed: 155 },
       ndre: { status: "Moderate", seed: 164 },
-      ndwi: { status: "Healthy", seed: 172 },
+      lswi: { status: "Healthy", seed: 172 },
       gci: { status: "Moderate", seed: 181 },
     },
   },
@@ -126,7 +126,7 @@ export const sessions: MonitoringSession[] = [
     perIndex: {
       ndvi: { status: "Moderate", seed: 203 },
       ndre: { status: "Healthy", seed: 217 },
-      ndwi: { status: "Healthy", seed: 228 },
+      lswi: { status: "Healthy", seed: 228 },
       gci: { status: "Healthy", seed: 234 },
     },
   },
@@ -137,7 +137,7 @@ export const sessions: MonitoringSession[] = [
     perIndex: {
       ndvi: { status: "Needs Attention", seed: 249 },
       ndre: { status: "Moderate", seed: 261 },
-      ndwi: { status: "Healthy", seed: 272 },
+      lswi: { status: "Healthy", seed: 272 },
       gci: { status: "Needs Attention", seed: 284 },
     },
   },
@@ -148,7 +148,7 @@ export const sessions: MonitoringSession[] = [
     perIndex: {
       ndvi: { status: "Needs Attention", seed: 303 },
       ndre: { status: "Needs Attention", seed: 311 },
-      ndwi: { status: "Moderate", seed: 322 },
+      lswi: { status: "Moderate", seed: 322 },
       gci: { status: "Needs Attention", seed: 334 },
     },
   },
@@ -177,7 +177,7 @@ export const summaryCards = [
     trend: "▬ stable",
     status: "Healthy" as const,
     sub: "Water coverage uniform",
-    indexKey: "ndwi" as IndexKey,
+    indexKey: "lswi" as IndexKey,
   },
   {
     title: "Chlorophyll",

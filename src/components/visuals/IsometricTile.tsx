@@ -98,3 +98,85 @@ export function directionLabel(row: number, col: number): string {
   if (ewNarrow) return `Central ${ns.toLowerCase()}`;
   return `${ns}-${ew}`;
 }
+
+export interface PolygonProjection {
+  top: [number, number][];
+  bottom: [number, number][];
+  walls: string[];
+  topPoints: string;
+  bottomPoints: string;
+  outlineD: string;
+}
+
+/**
+ * Project a lng/lat polygon ring onto the isometric SVG scene.
+ * The polygon's bounding box is scaled to fill the 4x4 grid's outer diamond,
+ * so the tile grid and the polygon share one coordinate system.
+ */
+export function projectPolygon(
+  ring: number[][] | undefined | null
+): PolygonProjection | null {
+  if (!ring || ring.length < 4) return null;
+
+  let minLng = Infinity;
+  let maxLng = -Infinity;
+  let minLat = Infinity;
+  let maxLat = -Infinity;
+  for (const pt of ring) {
+    const [lng, lat] = pt;
+    if (lng < minLng) minLng = lng;
+    if (lng > maxLng) maxLng = lng;
+    if (lat < minLat) minLat = lat;
+    if (lat > maxLat) maxLat = lat;
+  }
+  const lngSpan = maxLng - minLng;
+  const latSpan = maxLat - minLat;
+  if (lngSpan <= 0 || latSpan <= 0) return null;
+
+  const top: [number, number][] = [];
+  const bottom: [number, number][] = [];
+  for (const [lng, lat] of ring) {
+    const u = (lng - minLng) / lngSpan;
+    const v = (maxLat - lat) / latSpan;
+    const colPos = -0.5 + u * GRID;
+    const rowPos = -0.5 + v * GRID;
+    const x = SCENE_ORIGIN.x + (colPos - rowPos) * (TILE_W / 2);
+    const y = SCENE_ORIGIN.y + (colPos + rowPos) * (TILE_H / 2);
+    top.push([x, y]);
+    bottom.push([x, y + TILE_DEPTH]);
+  }
+
+  const walls: string[] = [];
+  for (let i = 0; i < top.length - 1; i++) {
+    const p1 = top[i];
+    const p2 = top[i + 1];
+    const p1b = bottom[i];
+    const p2b = bottom[i + 1];
+    walls.push(
+      `${p1[0]},${p1[1]} ${p2[0]},${p2[1]} ${p2b[0]},${p2b[1]} ${p1b[0]},${p1b[1]}`
+    );
+  }
+
+  const topPoints = top.map((p) => p.join(",")).join(" ");
+  const bottomPoints = bottom.map((p) => p.join(",")).join(" ");
+  const outlineD =
+    "M " +
+    top.map((p) => p.join(",")).join(" L ") +
+    " Z";
+
+  return { top, bottom, walls, topPoints, bottomPoints, outlineD };
+}
+
+/** Inverse of projectPolygon — map lng/lat into grid (row, col) coords. */
+export function lngLatToGridCell(
+  lng: number,
+  lat: number,
+  bbox: { minLng: number; maxLng: number; minLat: number; maxLat: number }
+): { row: number; col: number } {
+  const u = (lng - bbox.minLng) / (bbox.maxLng - bbox.minLng);
+  const v = (bbox.maxLat - lat) / (bbox.maxLat - bbox.minLat);
+  return {
+    row: Math.max(0, Math.min(GRID - 1, Math.floor(v * GRID))),
+    col: Math.max(0, Math.min(GRID - 1, Math.floor(u * GRID))),
+  };
+}

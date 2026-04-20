@@ -1,7 +1,9 @@
-fastapi==0.115.0
-uvicorn[standard]==0.30.6
-earthengine-api==1.1.0
-pydantic==2.9.2
-python-dotenv==1.0.1
-requests==2.32.3
-google-cloud-aiplatform==1.71.1
+fastapi>=0.115.0
+uvicorn[standard]>=0.30.6
+earthengine-api>=1.1.0
+pydantic>=2.9.2
+python-dotenv>=1.0.1
+requests>=2.32.3
+google-cloud-aiplatform>=1.95.0
+google-genai>=1.0.0
+google-adk>=1.0.0
