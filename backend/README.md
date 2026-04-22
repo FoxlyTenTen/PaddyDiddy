@@ -8,7 +8,7 @@ tile URLs plus mean statistics for four vegetation indices:
 | ---- | ----------------------- | ------------------------------ |
 | NDVI | `(B8 - B4) / (B8 + B4)` | Overall crop greenness         |
 | NDRE | `(B8 - B5) / (B8 + B5)` | Early stress indicator         |
-| NDWI | `(B3 - B8) / (B3 + B8)` | Surface moisture (McFeeters)   |
+| LSWI | `(B8 - B11) / (B8 + B11)` | Canopy moisture (LSWI)        |
 | GCI  | `(B8 / B3) - 1`         | Chlorophyll / nitrogen proxy   |
 
 ## 1. Prereqs

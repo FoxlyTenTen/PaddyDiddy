@@ -1,0 +1,61 @@
+{
+  "common": {
+    "dashboard": "Dashboard",
+    "monitoringHistory": "Monitoring History",
+    "optimize": "Optimize",
+    "settings": "Settings",
+    "search": "Search fields, indices, dates…",
+    "updated": "Updated",
+    "notifications": "Notifications",
+    "farmer": "Farmer",
+    "language": "Language",
+    "expand": "Expand",
+    "collapse": "Collapse"
+  },
+  "sidebar": {
+    "drawField": "Draw Field",
+    "fieldSettings": "Field Settings",
+    "reports": "Reports",
+    "preferences": "Preferences",
+    "subtitle": "Satellite crop intelligence",
+    "monitor": "Monitor",
+    "comingSoon": "Coming soon",
+    "soonBadge": "soon",
+    "support": "Support",
+    "supportDesc": "New to satellite monitoring? We guide you index-by-index.",
+    "openGuide": "Open guide"
+  },
+  "dashboard": {
+    "title": "Field Overview",
+    "description": "Real-time satellite analysis of your paddy fields.",
+    "fieldInfo": "Field Information",
+    "area": "Area",
+    "latestImage": "Latest Image",
+    "viewDetails": "View Details",
+    "overallHealth": "Overall Health",
+    "waterStatus": "Water Status",
+    "healthAtGlance": "Field health at a glance",
+    "headlineSignals": "Four headline signals summarised from today's satellite indices.",
+    "showRawDetails": "Show raw index details",
+    "rawDetailsDesc": "The four satellite indices (NDVI, NDRE, LSWI, GCI) behind the bird's-eye view. Useful if you want the raw signal."
+  },
+  "indexDetails": {
+    "back": "Back to Dashboard",
+    "whatsHappening": "What's Happening?",
+    "likelyCauses": "Likely Causes",
+    "preventionSteps": "Prevention Steps",
+    "simpleExplanation": "Simple Explanation",
+    "actionNeeded": "Action Needed",
+    "priority": "Priority",
+    "status": "Status"
+  },
+  "optimize": {
+    "title": "Intelligent Field Optimizer",
+    "description": "A specialized 3-agent system that visualizes your field conditions using Nano Banana and generates immediate action steps.",
+    "running": "Analyzing your field...",
+    "complete": "Field analysis complete",
+    "working": "Agents working…",
+    "rerun": "Re-run analysis",
+    "generate": "Generate field plan"
+  }
+}

@@ -14,7 +14,7 @@ const GRADIENTS: Record<IndexKey, { bg: string; lo: string; mid: string; hi: str
     mid: "Watch",
     hi: "Healthy",
   },
-  ndwi: {
+  lswi: {
     bg: "linear-gradient(to right, #78350f, #14b8a6, #1d4ed8)",
     lo: "Dry",
     mid: "Adequate",

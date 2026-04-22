@@ -3,7 +3,6 @@ import type {
   ImageDates,
   IndexInfo,
   IndexKey,
-  MonitoringSession,
 } from "@/types";
 
 export const field: FieldInfo = {
@@ -52,12 +51,12 @@ export const indices: IndexInfo[] = [
     metric: "0.41 avg",
   },
   {
-    key: "ndwi",
-    name: "NDWI",
-    fullName: "Normalized Difference Water Index",
+    key: "lswi",
+    name: "LSWI",
+    fullName: "Land Surface Water Index",
     shortExplanation: "Moisture condition",
     longExplanation:
-      "NDWI shows how much moisture is in the paddy canopy and surface. In a flooded rice system this helps confirm even water coverage.",
+      "LSWI shows how much moisture is in the paddy canopy and surface. In a flooded rice system this helps confirm even water coverage.",
     whyItMatters:
       "Uneven moisture can mean drainage issues, leaks, or irrigation problems. Spotting dry patches early prevents yield loss.",
     status: "Healthy",
@@ -84,76 +83,6 @@ export const indices: IndexInfo[] = [
 export const getIndex = (key: IndexKey): IndexInfo | undefined =>
   indices.find((i) => i.key === key);
 
-export const sessions: MonitoringSession[] = [
-  {
-    id: "s-2026-04-12",
-    date: "2026-04-12",
-    note: "Latest monitoring — minor stress in NE corner.",
-    abnormal: true,
-    perIndex: {
-      ndvi: { status: "Healthy", seed: 11 },
-      ndre: { status: "Moderate", seed: 27 },
-      ndwi: { status: "Healthy", seed: 42 },
-      gci: { status: "Needs Attention", seed: 73 },
-    },
-  },
-  {
-    id: "s-2026-04-02",
-    date: "2026-04-02",
-    note: "Canopy closure progressing evenly.",
-    perIndex: {
-      ndvi: { status: "Healthy", seed: 108 },
-      ndre: { status: "Healthy", seed: 114 },
-      ndwi: { status: "Healthy", seed: 121 },
-      gci: { status: "Moderate", seed: 133 },
-    },
-  },
-  {
-    id: "s-2026-03-23",
-    date: "2026-03-23",
-    note: "Post-fertilization uplift visible.",
-    perIndex: {
-      ndvi: { status: "Moderate", seed: 155 },
-      ndre: { status: "Moderate", seed: 164 },
-      ndwi: { status: "Healthy", seed: 172 },
-      gci: { status: "Moderate", seed: 181 },
-    },
-  },
-  {
-    id: "s-2026-03-13",
-    date: "2026-03-13",
-    note: "Tillering stage — good uniformity.",
-    perIndex: {
-      ndvi: { status: "Moderate", seed: 203 },
-      ndre: { status: "Healthy", seed: 217 },
-      ndwi: { status: "Healthy", seed: 228 },
-      gci: { status: "Healthy", seed: 234 },
-    },
-  },
-  {
-    id: "s-2026-03-03",
-    date: "2026-03-03",
-    note: "Early vegetative — canopy sparse.",
-    perIndex: {
-      ndvi: { status: "Needs Attention", seed: 249 },
-      ndre: { status: "Moderate", seed: 261 },
-      ndwi: { status: "Healthy", seed: 272 },
-      gci: { status: "Needs Attention", seed: 284 },
-    },
-  },
-  {
-    id: "s-2026-02-21",
-    date: "2026-02-21",
-    note: "Post-transplanting baseline.",
-    perIndex: {
-      ndvi: { status: "Needs Attention", seed: 303 },
-      ndre: { status: "Needs Attention", seed: 311 },
-      ndwi: { status: "Moderate", seed: 322 },
-      gci: { status: "Needs Attention", seed: 334 },
-    },
-  },
-];
-
 export const summaryCards = [
   {
     title: "Overall Health",
@@ -177,7 +106,7 @@ export const summaryCards = [
     trend: "▬ stable",
     status: "Healthy" as const,
     sub: "Water coverage uniform",
-    indexKey: "ndwi" as IndexKey,
+    indexKey: "lswi" as IndexKey,
   },
   {
     title: "Chlorophyll",

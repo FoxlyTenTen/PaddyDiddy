@@ -28,7 +28,7 @@ export function AnalysisBanner() {
             </h3>
             <p className="text-sm text-white/80">
               Demo data is shown below. Trace your field to replace it with
-              live Sentinel-2 NDVI, NDRE, NDWI and GCI heatmaps.
+              live Sentinel-2 NDVI, NDRE, LSWI and GCI heatmaps.
             </p>
           </div>
         </div>

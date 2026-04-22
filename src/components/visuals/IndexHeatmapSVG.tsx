@@ -7,7 +7,7 @@ type Ramp = [string, string, string];
 const RAMPS: Record<IndexKey, Ramp> = {
   ndvi: ["#7f1d1d", "#eab308", "#15803d"],
   ndre: ["#991b1b", "#f97316", "#16a34a"],
-  ndwi: ["#78350f", "#14b8a6", "#1d4ed8"],
+  lswi: ["#78350f", "#14b8a6", "#1d4ed8"],
   gci: ["#ecfccb", "#65a30d", "#14532d"],
 };
 

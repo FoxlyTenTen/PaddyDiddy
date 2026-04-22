@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Link, useParams, Navigate } from "react-router-dom";
 import {
   ArrowLeft,
@@ -6,6 +7,10 @@ import {
   Info,
   Satellite,
   Sparkles,
+  Loader2,
+  AlertTriangle,
+  ChevronRight,
+  LayoutGrid,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -17,6 +22,8 @@ import { IndexTileMap } from "@/components/map/IndexTileMap";
 import { useAnalysis } from "@/state/analysis";
 import { LegendBar } from "@/components/dashboard/LegendBar";
 import { cn } from "@/lib/utils";
+import { recommendIndex, type RecommendResponse } from "@/services/gee";
+import { useTranslation } from "react-i18next";
 
 const STATUS_BADGE: Record<
   IndexStatus,
@@ -34,9 +41,14 @@ const HEALTH_BIAS: Record<IndexStatus, number> = {
 };
 
 export default function IndexDetails() {
+  const { t, i18n } = useTranslation();
   const { indexKey } = useParams<{ indexKey: IndexKey }>();
   const info = indexKey ? getIndex(indexKey) : undefined;
   const { current } = useAnalysis();
+
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [recommendation, setRecommendation] = React.useState<RecommendResponse | null>(null);
 
   if (!info) return <Navigate to="/" replace />;
 
@@ -50,6 +62,26 @@ export default function IndexDetails() {
       : "—"
     : info.metric;
   const displayAreaHa = real ? current!.result.areaHa : field.sizeHa;
+
+  async function handleGenerateReport() {
+    if (!current?.geometry || !info) return;
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await recommendIndex(current.geometry, info.key, {
+        startDate: current.result.window.start,
+        endDate: current.result.window.end,
+        language: i18n.language,
+      });
+      setRecommendation(res);
+    } catch (e: any) {
+      setError(e?.message ?? String(e));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  const canGenerate = !!current?.geometry && !loading;
 
   return (
     <div className="flex flex-col gap-6">
@@ -82,8 +114,13 @@ export default function IndexDetails() {
           <Button variant="outline" size="sm">
             <Download className="mr-1 h-3.5 w-3.5" /> Export PNG
           </Button>
-          <Button size="sm">
-            <Sparkles className="mr-1 h-3.5 w-3.5" /> Generate report
+          <Button size="sm" onClick={handleGenerateReport} disabled={!canGenerate}>
+            {loading ? (
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+            )}
+            {t("indexDetails.generateReport", "Generate report")}
           </Button>
         </div>
       </div>
@@ -177,20 +214,132 @@ export default function IndexDetails() {
             </CardContent>
           </Card>
 
-          <Card className="border border-dashed border-slate-200 bg-white/60">
-            <CardHeader>
-              <CardTitle className="text-slate-700">
-                Detailed analysis
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-500">
-              Analysis report will be available in the next update. This will
-              include zonal statistics, trend comparisons and agronomic
-              recommendations tailored to your paddy stage.
-            </CardContent>
-          </Card>
+          {recommendation ? (
+            <Card className="bg-white ring-1 ring-padi-200">
+              <CardHeader>
+                <CardTitle className="text-slate-900 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-padi-700" /> AI Recommendation
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4 text-sm text-slate-700">
+                <p className="font-semibold text-base">{recommendation.headline}</p>
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 text-padi-600" /> Simple Explanation
+                  </h4>
+                  <p>{recommendation.simple_explanation}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 text-padi-600" /> What's happening
+                  </h4>
+                  <p>{recommendation.whats_happening}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 text-padi-600" /> Likely causes
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-0.5">
+                    {recommendation.likely_causes.map((cause, i) => (
+                      <li key={i}>{cause}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 text-padi-600" /> Action Steps
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {recommendation.prevention_steps.map((step, i) => (
+                      <li key={i}>
+                        <strong>{step.action}</strong> ({step.when}) — {step.why}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card className="border border-dashed border-slate-200 bg-white/60">
+              <CardHeader>
+                <CardTitle className="text-slate-700">
+                  Detailed analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-3 text-sm text-slate-500">
+                <p>
+                  Generate an AI-powered report to get zonal statistics, trend comparisons, and agronomic recommendations tailored to your paddy stage.
+                </p>
+                <Button variant="outline" size="sm" onClick={handleGenerateReport} disabled={!canGenerate} className="self-start">
+                  {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                  Generate Report
+                </Button>
+                {error && (
+                  <div className="flex items-start gap-2 rounded-lg bg-rose-50 p-2 text-xs text-rose-700 mt-2">
+                    <AlertTriangle className="h-4 w-4 flex-none" />
+                    <span>{error}</span>
+                  </div>
+                )}
+                {!real && !loading && (
+                  <p className="text-xs text-slate-400">
+                    * Draw a field on the map first to enable live AI recommendations.
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
+
+      {recommendation && (
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4 text-padi-700" />
+              Zone Action Matrix (4x4)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-4 gap-2">
+              {Array.from({ length: 16 }).map((_, i) => {
+                const r = Math.floor(i / 4);
+                const c = i % 4;
+                const zone = recommendation.zones_matrix.find(z => z.row === r && z.col === c);
+                
+                if (!zone) return <div key={i} className="p-3 rounded-lg border border-slate-100 bg-slate-50" />;
+
+                const isAttention = zone.status === "attention";
+
+                return (
+                  <div 
+                    key={i} 
+                    className={cn(
+                      "p-3 rounded-lg border flex flex-col gap-1 text-[11px]",
+                      isAttention 
+                        ? "bg-rose-50 border-rose-200" 
+                        : "bg-emerald-50 border-emerald-200"
+                    )}
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold opacity-70">R{r}, C{c}</span>
+                      <span className={cn(
+                        "w-2 h-2 rounded-full",
+                        isAttention ? "bg-rose-500" : "bg-emerald-500"
+                      )} />
+                    </div>
+                    <span className={cn(
+                      "font-medium leading-tight",
+                      isAttention ? "text-rose-800" : "text-emerald-800"
+                    )}>
+                      {zone.action_needed}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <Card>
         <CardHeader>
