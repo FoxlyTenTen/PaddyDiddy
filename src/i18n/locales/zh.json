@@ -1,0 +1,58 @@
+{
+  "common": {
+    "dashboard": "仪表板",
+    "monitoringHistory": "监测历史",
+    "optimize": "优化",
+    "settings": "设置",
+    "search": "搜索田块、指数、日期…",
+    "updated": "已更新",
+    "notifications": "通知",
+    "farmer": "农民",
+    "language": "语言",
+    "expand": "展开",
+    "collapse": "收起"
+  },
+  "sidebar": {
+    "drawField": "绘制田块",
+    "fieldSettings": "田块设置",
+    "reports": "报告",
+    "preferences": "偏好",
+    "subtitle": "卫星作物智能",
+    "monitor": "监测",
+    "comingSoon": "即将推出",
+    "soonBadge": "即将",
+    "support": "支持",
+    "supportDesc": "卫星监测新手？我们逐个指数为您指导。",
+    "openGuide": "打开指南"
+  },
+  "dashboard": {
+    "title": "田块概览",
+    "description": "您的稻田实时卫星分析。",
+    "fieldInfo": "田块信息",
+    "area": "面积",
+    "latestImage": "最新图像",
+    "viewDetails": "查看详情",
+    "overallHealth": "整体健康",
+    "waterStatus": "水分状态",
+    "healthAtGlance": "田块健康一览",
+    "headlineSignals": "从今日卫星指数中总结出的四个核心信号。",
+    "showRawDetails": "显示原始指数详情",
+    "rawDetailsDesc": "鸟瞰图背后的四个卫星指数（NDVI、NDRE、LSWI、GCI）。如果您需要原始信号，这很有用。"
+  },
+  "indexDetails": {
+    "back": "返回仪表板",
+    "whatsHappening": "发生了什么？",
+    "likelyCauses": "可能的原因",
+    "preventionSteps": "预防措施",
+    "simpleExplanation": "简单说明",
+    "actionNeeded": "需要采取行动",
+    "priority": "优先级",
+    "status": "状态"
+  },
+  "optimize": {
+    "title": "资源优化",
+    "description": "为您农场提供的 AI 驱动建议。",
+    "running": "正在分析您的田块...",
+    "complete": "分析完成"
+  }
+}

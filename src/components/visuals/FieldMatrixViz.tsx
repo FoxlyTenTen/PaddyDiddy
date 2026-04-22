@@ -1,17 +1,6 @@
 /**
  * FieldMatrixViz — renders the AI recommendation matrix shaped to the real
  * farm polygon drawn by the user.
- *
- * Layout:
- *   • The outer container is an SVG whose viewBox represents the bounding box
- *     of the user's polygon (in normalised 0-1 coordinate space).
- *   • A <clipPath> element clips everything to the actual polygon outline.
- *   • Each grid cell is drawn as a <rect> (or rotated hex approximation for
- *     hexagonal fields, or a regular polygon for pentagon, etc.) and fills
- *     with a heat-map colour based on the zone level.
- *   • A tooltip floats above hovered cells showing value + action text.
- *   • The component also exposes a getMatrixPayload() so you can pass the
- *     structured data straight to a multi-agent system.
  */
 
 import * as React from "react";
@@ -43,7 +32,6 @@ interface Props {
   indexName: string;
   indexMin: number;
   indexMax: number;
-  indexPalette: string[]; // [low_color, mid_color, high_color]
   className?: string;
   /** If true, show a JSON export button */
   showExport?: boolean;
@@ -105,7 +93,6 @@ function detectShapeType(pts: [number, number][]): "rect" | "hex" | "pentagon" |
   if (n === 4 || n === 5) return "rect"; // quads treated as rectangles
   if (n === 6) return "hex";
   if (n === 7 || n === 8) return "pentagon";
-  // Check if polygon is roughly regular (all interior angles similar)
   return "freeform";
 }
 
@@ -122,7 +109,6 @@ export function FieldMatrixViz({
   indexName,
   indexMin,
   indexMax,
-  indexPalette,
   className,
   showExport = true,
 }: Props) {
@@ -133,10 +119,8 @@ export function FieldMatrixViz({
   } | null>(null);
   const svgRef = React.useRef<SVGSVGElement>(null);
 
-  // Normalise polygon to viewBox 0-100, x right, y up (SVG: y down)
   const { normPts, shapeType, aspect } = React.useMemo(() => {
     if (!fieldPolygon || fieldPolygon.length < 3) {
-      // Fallback: rectangle
       const rPts: [number, number][] = [[0, 0], [1, 0], [1, 1], [0, 1], [0, 0]];
       return { normPts: rPts, shapeType: "rect" as const, aspect: 1 };
     }
@@ -147,13 +131,10 @@ export function FieldMatrixViz({
   const VW = 200;
   const VH = Math.round(VW / Math.max(0.3, Math.min(3, aspect)));
 
-  // Build cell data — for each (row, col) compute its bounding rect in viewBox
-  // coords and decide if it's inside the polygon.
   const cells = React.useMemo<CellData[]>(() => {
     const result: CellData[] = [];
     for (let r = 0; r < rows; r++) {
       for (let c = 0; c < cols; c++) {
-        // Centre of this cell in normalised 0-1 space
         const cu = (c + 0.5) / cols;
         const cv = (r + 0.5) / rows;
         const inside = pointInPoly(cu, cv, normPts);
@@ -168,7 +149,6 @@ export function FieldMatrixViz({
   const clipId = React.useId();
   const gradId = React.useId();
 
-  // SVG polygon string in viewBox coords
   const polyPointsStr = normPts
     .map(([u, v]) => `${(u * VW).toFixed(2)},${(v * VH).toFixed(2)}`)
     .join(" ");
@@ -176,7 +156,6 @@ export function FieldMatrixViz({
   const cellW = VW / cols;
   const cellH = VH / rows;
 
-  // Level counts for the legend summary
   const levelCounts = React.useMemo(() => {
     const counts: Record<ZoneLevel, number> = { optimal: 0, moderate: 0, low: 0, critical: 0, no_data: 0 };
     for (const cell of cells) {
@@ -187,7 +166,6 @@ export function FieldMatrixViz({
     return counts;
   }, [cells]);
 
-  // Export payload for multi-agent system
   const matrixPayload = React.useMemo(() => ({
     index: indexName,
     index_range: { min: indexMin, max: indexMax },
@@ -239,10 +217,9 @@ export function FieldMatrixViz({
 
   return (
     <div className={cn("flex flex-col gap-4", className)}>
-      {/* Header */}
       <div className="flex items-center justify-between gap-2 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="grid-shape-badge text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-800 text-slate-200">
+          <span className="text-[10px] font-semibold uppercase tracking-widest px-2 py-0.5 rounded-full bg-slate-800 text-slate-200">
             {shapeType} field
           </span>
           <span className="text-xs text-slate-400">{rows}×{cols} zone matrix</span>
@@ -262,7 +239,6 @@ export function FieldMatrixViz({
         )}
       </div>
 
-      {/* SVG Matrix */}
       <div className="relative rounded-2xl overflow-hidden border border-slate-200 bg-slate-950 shadow-2xl">
         <svg
           ref={svgRef}
@@ -271,21 +247,16 @@ export function FieldMatrixViz({
           onMouseLeave={() => setTooltip(null)}
         >
           <defs>
-            {/* Clip path to the real field shape */}
             <clipPath id={clipId}>
               <polygon points={polyPointsStr} />
             </clipPath>
-            {/* Subtle gradient overlay for depth */}
             <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
               <stop offset="0%" stopColor="white" stopOpacity="0.06" />
               <stop offset="100%" stopColor="black" stopOpacity="0.12" />
             </linearGradient>
           </defs>
-
-          {/* Background earth */}
           <rect width={VW} height={VH} fill="#0f172a" />
 
-          {/* Grid cells — all visible, outside polygon rendered as dim void */}
           {cells.map((cell) => {
             const x = cell.col * cellW;
             const y = cell.row * cellH;
@@ -304,9 +275,7 @@ export function FieldMatrixViz({
               );
             }
 
-            const norm = cell.stat?.norm ?? 0.5;
-            // Lerp opacity slightly so brighter = healthier
-            const fillOpacity = 0.7 + norm * 0.3;
+            const fillOpacity = 0.7 + (cell.stat?.norm ?? 0.5) * 0.3;
             const isAttention = cell.matrix?.status === "attention";
             const priority = cell.matrix?.priority ?? "none";
 
@@ -316,7 +285,6 @@ export function FieldMatrixViz({
                 onMouseMove={(e) => handleCellHover(e, cell)}
                 style={{ cursor: "pointer" }}
               >
-                {/* Cell background */}
                 <rect
                   x={x + 0.8} y={y + 0.8}
                   width={cellW - 1.6} height={cellH - 1.6}
@@ -326,8 +294,6 @@ export function FieldMatrixViz({
                   stroke={colors.border}
                   strokeWidth="0.4"
                 />
-
-                {/* Attention pulse ring */}
                 {isAttention && (
                   <rect
                     x={x + 0.8} y={y + 0.8}
@@ -339,8 +305,6 @@ export function FieldMatrixViz({
                     opacity="0.9"
                   />
                 )}
-
-                {/* Numeric value label */}
                 <text
                   x={x + cellW / 2} y={y + cellH / 2 - 1.5}
                   textAnchor="middle" dominantBaseline="middle"
@@ -351,8 +315,6 @@ export function FieldMatrixViz({
                 >
                   {cell.stat?.value_str ?? "—"}
                 </text>
-
-                {/* Level label */}
                 <text
                   x={x + cellW / 2} y={y + cellH / 2 + Math.min(cellW, cellH) * 0.16}
                   textAnchor="middle" dominantBaseline="middle"
@@ -363,8 +325,6 @@ export function FieldMatrixViz({
                 >
                   {colors.label}
                 </text>
-
-                {/* Priority dot (top-right corner) */}
                 {priority !== "none" && (
                   <circle
                     cx={x + cellW - 2.5} cy={y + 2.5}
@@ -376,7 +336,6 @@ export function FieldMatrixViz({
             );
           })}
 
-          {/* Field boundary outline — drawn over cells */}
           <polygon
             points={polyPointsStr}
             fill="none"
@@ -384,11 +343,7 @@ export function FieldMatrixViz({
             strokeWidth="0.8"
             strokeDasharray="3,2"
           />
-
-          {/* Depth sheen overlay */}
           <rect width={VW} height={VH} fill={`url(#${gradId})`} />
-
-          {/* Grid lines (clipped) */}
           <g clipPath={`url(#${clipId})`} opacity="0.15">
             {Array.from({ length: cols - 1 }).map((_, i) => (
               <line
@@ -407,8 +362,6 @@ export function FieldMatrixViz({
               />
             ))}
           </g>
-
-          {/* Row/col labels along edges */}
           {Array.from({ length: cols }).map((_, c) => (
             <text
               key={`cl${c}`}
@@ -433,7 +386,6 @@ export function FieldMatrixViz({
           ))}
         </svg>
 
-        {/* Floating tooltip */}
         {tooltip && tooltip.cell.inside && (
           <div
             className="pointer-events-none absolute z-50 rounded-xl border border-slate-700 bg-slate-900/95 backdrop-blur-md p-3 shadow-2xl text-xs"
@@ -474,7 +426,6 @@ export function FieldMatrixViz({
         )}
       </div>
 
-      {/* Legend */}
       <div className="flex flex-wrap gap-2">
         {(["critical", "low", "moderate", "optimal", "no_data"] as ZoneLevel[]).map((lv) => {
           const cnt = levelCounts[lv];
@@ -492,15 +443,8 @@ export function FieldMatrixViz({
             </div>
           );
         })}
-        <div className="flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-[11px] font-medium text-slate-500">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-            <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
-          </svg>
-          Outside field boundary: not counted
-        </div>
       </div>
 
-      {/* Priority breakdown */}
       {zonesMatrix.some((z) => z.priority === "high" || z.priority === "medium") && (
         <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3">
           <div className="text-xs font-semibold text-rose-800 mb-2 flex items-center gap-1.5">
@@ -510,7 +454,7 @@ export function FieldMatrixViz({
           <div className="flex flex-col gap-1.5">
             {zonesMatrix
               .filter((z) => z.priority === "high" || z.priority === "medium")
-              .sort((a, b) => (a.priority === "high" ? -1 : 1))
+              .sort((a) => (a.priority === "high" ? -1 : 1))
               .map((z) => (
                 <div key={`${z.row}-${z.col}`} className="flex items-start gap-2 text-xs">
                   <span
@@ -530,25 +474,6 @@ export function FieldMatrixViz({
           </div>
         </div>
       )}
-
-      {/* Multi-agent JSON preview */}
-      <details className="group rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
-        <summary className="flex cursor-pointer items-center gap-2 px-4 py-2.5 text-xs font-medium text-slate-600 select-none hover:bg-slate-100 transition">
-          <svg
-            className="h-3.5 w-3.5 transition-transform group-open:rotate-90"
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"
-          >
-            <polyline points="9 18 15 12 9 6" />
-          </svg>
-          Multi-agent payload preview
-          <span className="ml-auto text-slate-400 font-normal">
-            {matrixPayload.zones.length} zones · {shapeType} shape
-          </span>
-        </summary>
-        <pre className="overflow-x-auto p-4 text-[10px] leading-relaxed text-slate-600 bg-slate-900 text-green-300 font-mono">
-          {JSON.stringify(matrixPayload, null, 2)}
-        </pre>
-      </details>
     </div>
   );
 }

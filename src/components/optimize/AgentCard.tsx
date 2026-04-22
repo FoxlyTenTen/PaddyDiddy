@@ -2,8 +2,8 @@ import {
   AlertCircle,
   CheckCircle2,
   Circle,
-  Cloud,
   Loader2,
+  Satellite,
   Sparkles,
   Wrench,
   type LucideIcon,
@@ -19,28 +19,22 @@ interface AgentMeta {
 }
 
 const AGENT_META: Record<AgentKey, AgentMeta> = {
-  diagnosis: {
-    title: "Diagnosis",
-    subtitle: "Reads NDVI/NDRE/LSWI/GCI zones",
+  visual_analyst: {
+    title: "Visual Analyst",
+    subtitle: "Nano Banana image engine",
+    Icon: Satellite,
+    accent: "text-blue-600",
+  },
+  diagnostic_agronomist: {
+    title: "Diagnostic Agronomist",
+    subtitle: "Identifies root causes",
     Icon: Sparkles,
     accent: "text-emerald-600",
   },
-  water_optimizer: {
-    title: "Water Optimizer",
-    subtitle: "Checks rain forecast, plans irrigation",
-    Icon: Cloud,
-    accent: "text-sky-600",
-  },
-  nutrient_optimizer: {
-    title: "Nutrient Optimizer",
-    subtitle: "Variable-rate urea + NPK plan",
+  action_planner: {
+    title: "Action Planner",
+    subtitle: "Creates checklists",
     Icon: Wrench,
-    accent: "text-amber-600",
-  },
-  roi: {
-    title: "ROI Summary",
-    subtitle: "Rolls savings into Ringgit total",
-    Icon: CheckCircle2,
     accent: "text-padi-700",
   },
 };
@@ -150,7 +144,7 @@ export function AgentCard({ state }: { state: AgentCardState }) {
 
       {state.status === "idle" && !state.output && (
         <p className="mt-3 text-xs italic text-slate-400">
-          Waiting for upstream agents…
+          Waiting for handoff…
         </p>
       )}
     </div>

@@ -1,0 +1,58 @@
+{
+  "common": {
+    "dashboard": "Papan Pemuka",
+    "monitoringHistory": "Sejarah Pemantauan",
+    "optimize": "Optimum",
+    "settings": "Tetapan",
+    "search": "Cari sawah, indeks, tarikh…",
+    "updated": "Dikemas kini",
+    "notifications": "Notifikasi",
+    "farmer": "Petani",
+    "language": "Bahasa",
+    "expand": "Buka",
+    "collapse": "Tutup"
+  },
+  "sidebar": {
+    "drawField": "Lukis Sawah",
+    "fieldSettings": "Tetapan Sawah",
+    "reports": "Laporan",
+    "preferences": "Keutamaan",
+    "subtitle": "Perisikan tanaman satelit",
+    "monitor": "Pantau",
+    "comingSoon": "Akan datang",
+    "soonBadge": "segera",
+    "support": "Sokongan",
+    "supportDesc": "Baru dalam pemantauan satelit? Kami membimbing anda indeks demi indeks.",
+    "openGuide": "Buka panduan"
+  },
+  "dashboard": {
+    "title": "Gambaran Keseluruhan Sawah",
+    "description": "Analisis satelit masa nyata sawah padi anda.",
+    "fieldInfo": "Maklumat Sawah",
+    "area": "Keluasan",
+    "latestImage": "Imej Terkini",
+    "viewDetails": "Lihat Butiran",
+    "overallHealth": "Kesihatan Keseluruhan",
+    "waterStatus": "Status Air",
+    "healthAtGlance": "Kesihatan sawah sepintas lalu",
+    "headlineSignals": "Empat isyarat utama yang diringkaskan daripada indeks satelit hari ini.",
+    "showRawDetails": "Tunjukkan butiran indeks mentah",
+    "rawDetailsDesc": "Empat indeks satelit (NDVI, NDRE, LSWI, GCI) di sebalik pandangan mata burung. Berguna jika anda mahukan isyarat mentah."
+  },
+  "indexDetails": {
+    "back": "Kembali ke Papan Pemuka",
+    "whatsHappening": "Apa yang Berlaku?",
+    "likelyCauses": "Punca Kemungkinan",
+    "preventionSteps": "Langkah Pencegahan",
+    "simpleExplanation": "Penerangan Mudah",
+    "actionNeeded": "Tindakan Diperlukan",
+    "priority": "Keutamaan",
+    "status": "Status"
+  },
+  "optimize": {
+    "title": "Pengoptimuman Sumber",
+    "description": "Syor dipacu AI untuk ladang anda.",
+    "running": "Menganalisis sawah anda...",
+    "complete": "Analisis Selesai"
+  }
+}

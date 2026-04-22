@@ -20,26 +20,6 @@ export interface AnalyzeResponse {
   bounds: unknown;
 }
 
-export type ZoneLevel = "optimal" | "moderate" | "low" | "critical" | "no_data";
-export type ZonePriority = "high" | "medium" | "low" | "none";
-
-export interface ZoneStat {
-  row: number;
-  col: number;
-  value: number | null;
-  value_str: string;
-  level: ZoneLevel;
-  norm: number | null; // 0-1 normalized
-}
-
-export interface ZoneMatrixEntry {
-  row: number;
-  col: number;
-  status: "good" | "attention";
-  action_needed: string;
-  priority: ZonePriority;
-}
-
 export interface RecommendResponse {
   headline: string;
   severity: "healthy" | "moderate" | "critical";
@@ -47,20 +27,24 @@ export interface RecommendResponse {
   likely_causes: string[];
   prevention_steps: { action: string; when: string; why: string }[];
   simple_explanation: string;
-  zones_matrix: ZoneMatrixEntry[];
-  // Rich numeric data from GEE zone stats
-  zone_stats: ZoneStat[];
-  rows: number;
-  cols: number;
-  field_polygon: [number, number][] | null; // [[lng, lat], ...] outer ring
-  index_key: string;
-  index_name: string;
-  index_min: number;
-  index_max: number;
-  index_palette: string[];
-  mean: number | null;
-  status: string;
-  image_date: string;
+  zones_matrix: { row: number; col: number; status: "good" | "attention"; action_needed: string }[];
+}
+
+export interface ZoneStat {
+  row: number;
+  col: number;
+  value: number;
+  value_str: string;
+  level: string;
+  norm: number;
+}
+
+export interface ZoneMatrixEntry {
+  row: number;
+  col: number;
+  status: "good" | "attention";
+  priority: "none" | "low" | "medium" | "high";
+  action_needed: string;
 }
 
 export interface PolygonGeometry {
@@ -70,11 +54,11 @@ export interface PolygonGeometry {
 
 const DEFAULT_BASE =
   (import.meta.env.VITE_API_BASE as string | undefined) ??
-  "http://localhost:8000";
+  (import.meta.env.PROD ? "" : "http://localhost:8000");
 
 export async function analyzeField(
   geometry: PolygonGeometry,
-  opts?: { startDate?: string; endDate?: string; baseUrl?: string }
+  opts?: { startDate?: string; endDate?: string; baseUrl?: string; language?: string }
 ): Promise<AnalyzeResponse> {
   const base = opts?.baseUrl ?? DEFAULT_BASE;
   const res = await fetch(`${base}/api/analyze`, {
@@ -84,6 +68,7 @@ export async function analyzeField(
       geometry,
       start_date: opts?.startDate ?? null,
       end_date: opts?.endDate ?? null,
+      language: opts?.language ?? "en",
     }),
   });
   if (!res.ok) {
@@ -102,7 +87,7 @@ export async function analyzeField(
 export async function recommendIndex(
   geometry: PolygonGeometry,
   indexKey: string,
-  opts?: { startDate?: string; endDate?: string; baseUrl?: string }
+  opts?: { startDate?: string; endDate?: string; baseUrl?: string; language?: string }
 ): Promise<RecommendResponse> {
   const base = opts?.baseUrl ?? DEFAULT_BASE;
   const res = await fetch(`${base}/api/recommend`, {
@@ -113,6 +98,7 @@ export async function recommendIndex(
       index_key: indexKey,
       start_date: opts?.startDate ?? null,
       end_date: opts?.endDate ?? null,
+      language: opts?.language ?? "en",
     }),
   });
   if (!res.ok) {

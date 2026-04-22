@@ -190,7 +190,7 @@ def _normalize(key: str, val: float | None) -> float | None:
     return max(0.0, min(1.0, (val - cfg["min"]) / denom))
 
 
-def recommend(scene: gee.Scene, index_key: str) -> dict[str, Any]:
+def recommend(scene: gee.Scene, index_key: str, language: str = "en") -> dict[str, Any]:
     """Render the single-index PNG, call Gemini, return a structured advisory."""
     key = index_key.lower().strip()
     if key not in gee.INDEX_CONFIG:
@@ -202,6 +202,14 @@ def recommend(scene: gee.Scene, index_key: str) -> dict[str, Any]:
     guide = _INDEX_GUIDE[key]
 
     _init()
+
+    lang_map = {
+        "en": "English",
+        "ms": "Bahasa Malaysia",
+        "zh": "Mandarin Chinese",
+        "ta": "Tamil"
+    }
+    target_lang = lang_map.get(language, "English")
 
     indices = gee.build_indices(scene.composite)
     index_img = indices[key]
@@ -238,7 +246,7 @@ def recommend(scene: gee.Scene, index_key: str) -> dict[str, Any]:
     zone_text = "\n".join(f"Row {r}: {zone_lines[r]}" for r in range(4))
 
     instructions = f"""You are advising a Malaysian smallholder paddy (rice)
-farmer. Speak in simple, warm, plain English — no jargon like
+farmer. Speak in simple, warm, plain {target_lang} — no jargon like
 "chlorophyll absorption" or "reflectance".
 
 You are looking at ONE satellite-derived index image for this farmer's
@@ -288,7 +296,9 @@ Return a JSON object with:
 
 Keep language at a Form-3 reading level. No technical index names in the
 whats_happening or prevention_steps — use words like "greenness",
-"moisture", "leaf nitrogen" instead."""
+"moisture", "leaf nitrogen" instead.
+
+IMPORTANT: All text fields (headline, whats_happening, likely_causes, action, when, why, simple_explanation, action_needed) MUST be in {target_lang}."""
 
 
     parts = [

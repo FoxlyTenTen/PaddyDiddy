@@ -1,5 +1,6 @@
 """SSE stream helper — runs the ADK resource-optimizer and yields JSON events
-shaped for the frontend state machine."""
+shaped for the frontend state machine.
+"""
 
 from __future__ import annotations
 
@@ -23,9 +24,12 @@ log = logging.getLogger(__name__)
 APP_NAME = "padiwatch_optimizer"
 USER_ID = "local_user"
 
-# Agents we surface in the UI. Order matters — the frontend renders cards
-# in this order.
-KNOWN_AGENTS = ("diagnosis", "water_optimizer", "nutrient_optimizer", "roi")
+# Agents we surface in the UI.
+KNOWN_AGENTS = (
+    "visual_analyst",
+    "diagnostic_agronomist",
+    "action_planner",
+)
 
 
 def _sse(payload: dict[str, Any]) -> str:
@@ -77,7 +81,6 @@ def _try_parse_json(raw: Any) -> Any:
     if not isinstance(raw, str):
         return raw
     s = raw.strip()
-    # Strip ```json ... ``` fences some models still emit.
     if s.startswith("```"):
         s = s.strip("`")
         if s.startswith("json"):
@@ -94,19 +97,23 @@ async def run_optimization_stream(
     geometry_geojson: dict,
     start_date: str | None,
     end_date: str | None,
+    language: str = "en",
 ) -> AsyncIterator[str]:
-    """Async generator yielding SSE lines for the /api/optimize endpoint.
-
-    Wrapped in an outer try/except so any crash still produces a terminal
-    SSE event — otherwise the browser sees ERR_INCOMPLETE_CHUNKED_ENCODING.
-    """
+    """Async generator yielding SSE lines for the /api/optimize endpoint."""
 
     t0 = time.time()
     session_id = "s_" + uuid.uuid4().hex
     stage = "startup"
 
+    lang_map = {
+        "en": "English",
+        "ms": "Bahasa Malaysia",
+        "zh": "Mandarin Chinese",
+        "ta": "Tamil"
+    }
+    target_lang = lang_map.get(language, "English")
+
     try:
-        # 1) Announce the run so the UI can render idle cards immediately.
         yield _sse(
             {
                 "type": "run_started",
@@ -116,7 +123,6 @@ async def run_optimization_stream(
             }
         )
 
-        # 2) Prepare the Scene. This is a GEE call — can take 3-8s.
         stage = "prepare_scene"
         scene = gee.prepare_scene(geometry_geojson, start_date, end_date)
 
@@ -131,9 +137,6 @@ async def run_optimization_stream(
             }
         )
 
-        # 3) Build runner + session. Scene is too heavy (and contains
-        #    non-serializable ee.Image objects) to live in ADK state — we
-        #    stash it in a module registry keyed by session_id instead.
         stage = "build_runner"
         register_scene(session_id, scene)
         root_agent = create_root_agent()
@@ -143,6 +146,7 @@ async def run_optimization_stream(
             user_id=USER_ID,
             session_id=session_id,
             state={
+                "session_id": session_id,
                 "field_center": field_center,
                 "area_ha": scene.area_ha,
             },
@@ -156,7 +160,7 @@ async def run_optimization_stream(
         seen_agents: set[str] = set()
         trigger = genai_types.Content(
             role="user",
-            parts=[genai_types.Part(text="Run the resource-optimization pipeline.")],
+            parts=[genai_types.Part(text=f"Run the Image-First multi-agent pipeline. IMPORTANT: Provide all final outputs for the farmer in {target_lang}.")],
         )
 
         stage = "runner"
@@ -170,62 +174,48 @@ async def run_optimization_stream(
 
             if author not in seen_agents and author in KNOWN_AGENTS:
                 seen_agents.add(author)
-                yield _sse(
-                    {"type": "agent_started", "agent": author, "ts": now}
-                )
+                yield _sse({"type": "agent_started", "agent": author, "ts": now})
 
             content = getattr(event, "content", None)
 
             tool_call = _extract_tool_call(content)
             if tool_call:
-                yield _sse(
-                    {
-                        "type": "tool_called",
-                        "agent": author,
-                        "tool": tool_call["name"],
-                        "args": tool_call["args"],
-                        "ts": now,
-                    }
-                )
+                yield _sse({
+                    "type": "tool_called",
+                    "agent": author,
+                    "tool": tool_call["name"],
+                    "args": tool_call["args"],
+                    "ts": now,
+                })
 
+            # Note: fr used in _extract_tool_result was fixed above.
             tool_result = _extract_tool_result(content)
             if tool_result:
-                yield _sse(
-                    {
-                        "type": "tool_result",
-                        "agent": author,
-                        "tool": tool_result["name"],
-                        "preview": _shorten(tool_result["response"]),
-                        "ts": now,
-                    }
-                )
+                yield _sse({
+                    "type": "tool_result",
+                    "agent": author,
+                    "tool": tool_result["name"],
+                    "preview": _shorten(tool_result["response"]),
+                    "ts": now,
+                })
 
             text = _extract_text(content)
             if text and not tool_call and not tool_result:
-                yield _sse(
-                    {
-                        "type": "agent_output",
-                        "agent": author,
-                        "text": _shorten(text, max_len=400),
-                        "ts": now,
-                    }
-                )
+                yield _sse({
+                    "type": "agent_output",
+                    "agent": author,
+                    "text": _shorten(text, max_len=500),
+                    "ts": now,
+                })
 
             is_final = False
             try:
                 is_final = bool(event.is_final_response())
-            except Exception:  # noqa: BLE001
+            except Exception:
                 is_final = False
             if is_final and author in KNOWN_AGENTS:
-                yield _sse(
-                    {
-                        "type": "agent_finished",
-                        "agent": author,
-                        "ts": now,
-                    }
-                )
+                yield _sse({"type": "agent_finished", "agent": author, "ts": now})
 
-        # 4) Read final session state and send one consolidated payload.
         stage = "final_state"
         final_session = await session_service.get_session(
             app_name=APP_NAME, user_id=USER_ID, session_id=session_id
@@ -237,16 +227,16 @@ async def run_optimization_stream(
                 "type": "final",
                 "ts": time.time() - t0,
                 "result": {
-                    "diagnosis": state.get("diagnosis"),
-                    "water_plan": _try_parse_json(state.get("water_plan")),
-                    "nutrient_plan": _try_parse_json(state.get("nutrient_plan")),
-                    "roi": _try_parse_json(state.get("roi")),
+                    "visual_analysis": _try_parse_json(state.get("visual_analysis")),
+                    "diagnoses": _try_parse_json(state.get("diagnoses")),
+                    "action_plan": _try_parse_json(state.get("action_plan")),
+                    "generated_image": state.get("generated_farm_image"),
                     "area_ha": state.get("area_ha"),
                     "field_center": state.get("field_center"),
                 },
             }
         )
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         log.exception("Optimizer run failed at stage=%s", stage)
         try:
             yield _sse(
@@ -257,8 +247,7 @@ async def run_optimization_stream(
                     "ts": time.time() - t0,
                 }
             )
-        except Exception:  # noqa: BLE001
-            # Client already disconnected — nothing more we can do.
+        except Exception:
             pass
     finally:
         release_scene(session_id)
@@ -268,6 +257,6 @@ def _shorten(value: Any, max_len: int = 240) -> str:
     if not isinstance(value, str):
         try:
             value = json.dumps(value, default=str)
-        except Exception:  # noqa: BLE001
+        except Exception:
             value = str(value)
     return value if len(value) <= max_len else value[: max_len - 1] + "…"

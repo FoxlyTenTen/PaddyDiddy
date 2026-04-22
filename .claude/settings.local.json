@@ -25,7 +25,8 @@
       "WebFetch(domain:docs.cloud.google.com)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:googleapis.github.io)",
-      "Read(//c/Users/mohda/.claude/skills/**)"
+      "Read(//c/Users/mohda/.claude/skills/**)",
+      "Bash(git add *)"
     ]
   }
 }

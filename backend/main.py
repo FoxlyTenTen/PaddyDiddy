@@ -76,6 +76,7 @@ class AnalyzeRequest(BaseModel):
     end_date: str | None = Field(
         None, description="YYYY-MM-DD end of search window."
     )
+    language: str = Field("en", description="Language for AI output (en, ms, zh, ta)")
 
 
 class IndexResult(BaseModel):
@@ -175,7 +176,7 @@ def farm_view(req: AnalyzeRequest) -> FarmViewResponse:
         )
 
     try:
-        payload = vertex_analyze.analyze_zones(scene)
+        payload = vertex_analyze.analyze_zones(scene, language=req.language)
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
     except Exception as exc:  # noqa: BLE001
@@ -223,7 +224,7 @@ def farm_image(req: AnalyzeRequest) -> FarmImageResponse:
         )
 
     try:
-        zone_payload = vertex_analyze.analyze_zones(scene)
+        zone_payload = vertex_analyze.analyze_zones(scene, language=req.language)
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
     except Exception as exc:  # noqa: BLE001
@@ -273,7 +274,7 @@ def recommend_index(req: RecommendRequest) -> dict[str, Any]:
 
     import vertex_recommend
     try:
-        payload = vertex_recommend.recommend(scene, req.index_key)
+        payload = vertex_recommend.recommend(scene, req.index_key, language=req.language)
     except RuntimeError as exc:
         raise HTTPException(status_code=502, detail=str(exc))
     except Exception as exc:  # noqa: BLE001
@@ -343,7 +344,7 @@ async def optimize(req: AnalyzeRequest) -> StreamingResponse:
     """Stream the ADK resource-optimizer agents' live state as SSE."""
     return StreamingResponse(
         run_optimization_stream(
-            req.geometry.model_dump(), req.start_date, req.end_date
+            req.geometry.model_dump(), req.start_date, req.end_date, language=req.language
         ),
         media_type="text/event-stream",
         headers={
@@ -353,3 +354,16 @@ async def optimize(req: AnalyzeRequest) -> StreamingResponse:
             "X-Accel-Buffering": "no",
         },
     )
+
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse, JSONResponse
+
+if os.path.isdir("dist"):
+    @app.exception_handler(404)
+    async def custom_404_handler(request, exc):
+        if request.url.path.startswith("/api/"):
+            return JSONResponse(status_code=404, content={"detail": "Not Found"})
+        return FileResponse("dist/index.html")
+
+    app.mount("/", StaticFiles(directory="dist", html=True), name="static")
+

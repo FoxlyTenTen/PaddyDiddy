@@ -3,11 +3,11 @@ import type { PolygonGeometry } from "@/services/gee";
 
 const DEFAULT_BASE =
   (import.meta.env.VITE_API_BASE as string | undefined) ??
-  "http://localhost:8000";
+  (import.meta.env.PROD ? "" : "http://localhost:8000");
 
 export async function fetchFarmImage(
   geometry: PolygonGeometry,
-  opts?: { startDate?: string; endDate?: string; baseUrl?: string }
+  opts?: { startDate?: string; endDate?: string; baseUrl?: string; language?: string }
 ): Promise<FarmImage> {
   const base = opts?.baseUrl ?? DEFAULT_BASE;
   const res = await fetch(`${base}/api/farm-image`, {
@@ -17,6 +17,7 @@ export async function fetchFarmImage(
       geometry,
       start_date: opts?.startDate ?? null,
       end_date: opts?.endDate ?? null,
+      language: opts?.language ?? "en",
     }),
   });
   if (!res.ok) {

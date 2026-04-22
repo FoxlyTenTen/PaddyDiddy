@@ -9,8 +9,8 @@ import {
   Sparkles,
   Loader2,
   AlertTriangle,
+  ChevronRight,
   LayoutGrid,
-  FileText,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,12 +18,12 @@ import { Button } from "@/components/ui/button";
 import type { IndexKey, IndexStatus } from "@/types";
 import { field, getIndex, imageDates } from "@/data/mockData";
 import { IndexHeatmapSVG } from "@/components/visuals/IndexHeatmapSVG";
-import { FieldMatrixViz } from "@/components/visuals/FieldMatrixViz";
 import { IndexTileMap } from "@/components/map/IndexTileMap";
 import { useAnalysis } from "@/state/analysis";
 import { LegendBar } from "@/components/dashboard/LegendBar";
 import { cn } from "@/lib/utils";
 import { recommendIndex, type RecommendResponse } from "@/services/gee";
+import { useTranslation } from "react-i18next";
 
 const STATUS_BADGE: Record<
   IndexStatus,
@@ -41,6 +41,7 @@ const HEALTH_BIAS: Record<IndexStatus, number> = {
 };
 
 export default function IndexDetails() {
+  const { t, i18n } = useTranslation();
   const { indexKey } = useParams<{ indexKey: IndexKey }>();
   const info = indexKey ? getIndex(indexKey) : undefined;
   const { current } = useAnalysis();
@@ -48,7 +49,6 @@ export default function IndexDetails() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [recommendation, setRecommendation] = React.useState<RecommendResponse | null>(null);
-  const [activeTab, setActiveTab] = React.useState<"report" | "matrix">("report");
 
   if (!info) return <Navigate to="/" replace />;
 
@@ -71,9 +71,9 @@ export default function IndexDetails() {
       const res = await recommendIndex(current.geometry, info.key, {
         startDate: current.result.window.start,
         endDate: current.result.window.end,
+        language: i18n.language,
       });
       setRecommendation(res);
-      setActiveTab("report");
     } catch (e: any) {
       setError(e?.message ?? String(e));
     } finally {
@@ -116,11 +116,11 @@ export default function IndexDetails() {
           </Button>
           <Button size="sm" onClick={handleGenerateReport} disabled={!canGenerate}>
             {loading ? (
-              <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
+              <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
             ) : (
-              <Sparkles className="mr-1 h-3.5 w-3.5" />
+              <Sparkles className="mr-1.5 h-3.5 w-3.5" />
             )}
-            Generate report
+            {t("indexDetails.generateReport", "Generate report")}
           </Button>
         </div>
       </div>
@@ -215,86 +215,48 @@ export default function IndexDetails() {
           </Card>
 
           {recommendation ? (
-            <Card className="bg-white ring-1 ring-padi-200 overflow-hidden">
-              <CardHeader className="pb-2">
-                <div className="flex items-center justify-between gap-2 flex-wrap">
-                  <CardTitle className="text-slate-900 flex items-center gap-2">
-                    <Sparkles className="h-4 w-4 text-padi-700" /> AI Recommendation
-                  </CardTitle>
-                  {/* Tab switcher */}
-                  <div className="flex rounded-lg border border-slate-200 bg-slate-50 p-0.5 gap-0.5">
-                    <button
-                      onClick={() => setActiveTab("report")}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition",
-                        activeTab === "report"
-                          ? "bg-white text-slate-800 shadow-sm"
-                          : "text-slate-500 hover:text-slate-700"
-                      )}
-                    >
-                      <FileText className="h-3 w-3" />
-                      Report
-                    </button>
-                    <button
-                      onClick={() => setActiveTab("matrix")}
-                      className={cn(
-                        "flex items-center gap-1.5 rounded-md px-3 py-1 text-xs font-medium transition",
-                        activeTab === "matrix"
-                          ? "bg-white text-slate-800 shadow-sm"
-                          : "text-slate-500 hover:text-slate-700"
-                      )}
-                    >
-                      <LayoutGrid className="h-3 w-3" />
-                      Zone Matrix
-                    </button>
-                  </div>
-                </div>
+            <Card className="bg-white ring-1 ring-padi-200">
+              <CardHeader>
+                <CardTitle className="text-slate-900 flex items-center gap-2">
+                  <Sparkles className="h-4 w-4 text-padi-700" /> AI Recommendation
+                </CardTitle>
               </CardHeader>
               <CardContent className="flex flex-col gap-4 text-sm text-slate-700">
-                {activeTab === "report" ? (
-                  <>
-                    <p className="font-semibold text-base">{recommendation.headline}</p>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 mb-1">Simple Explanation</h4>
-                      <p>{recommendation.simple_explanation}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 mb-1">What's happening</h4>
-                      <p>{recommendation.whats_happening}</p>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 mb-1">Likely causes</h4>
-                      <ul className="list-disc pl-5">
-                        {recommendation.likely_causes.map((cause, i) => (
-                          <li key={i}>{cause}</li>
-                        ))}
-                      </ul>
-                    </div>
-                    <div>
-                      <h4 className="font-semibold text-slate-900 mb-1">Actions</h4>
-                      <ul className="list-disc pl-5">
-                        {recommendation.prevention_steps.map((step, i) => (
-                          <li key={i}>
-                            <strong>{step.action}</strong> ({step.when}) — {step.why}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </>
-                ) : (
-                  <FieldMatrixViz
-                    fieldPolygon={recommendation.field_polygon}
-                    zoneStat={recommendation.zone_stats ?? []}
-                    zonesMatrix={recommendation.zones_matrix}
-                    rows={recommendation.rows ?? 4}
-                    cols={recommendation.cols ?? 4}
-                    indexName={recommendation.index_name ?? info.name}
-                    indexMin={recommendation.index_min ?? 0}
-                    indexMax={recommendation.index_max ?? 1}
-                    indexPalette={recommendation.index_palette ?? ["#7f1d1d", "#eab308", "#15803d"]}
-                    showExport
-                  />
-                )}
+                <p className="font-semibold text-base">{recommendation.headline}</p>
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 text-padi-600" /> Simple Explanation
+                  </h4>
+                  <p>{recommendation.simple_explanation}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 text-padi-600" /> What's happening
+                  </h4>
+                  <p>{recommendation.whats_happening}</p>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 text-padi-600" /> Likely causes
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-0.5">
+                    {recommendation.likely_causes.map((cause, i) => (
+                      <li key={i}>{cause}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <h4 className="font-semibold text-slate-900 mb-1 flex items-center gap-1.5">
+                    <ChevronRight className="h-3.5 w-3.5 text-padi-600" /> Action Steps
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-1">
+                    {recommendation.prevention_steps.map((step, i) => (
+                      <li key={i}>
+                        <strong>{step.action}</strong> ({step.when}) — {step.why}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               </CardContent>
             </Card>
           ) : (
@@ -330,42 +292,51 @@ export default function IndexDetails() {
       </div>
 
       {recommendation && (
-        <Card className="overflow-hidden col-span-full">
-          <CardHeader className="pb-2">
-            <div className="flex items-center justify-between gap-2 flex-wrap">
-              <CardTitle className="flex items-center gap-2">
-                <LayoutGrid className="h-4 w-4 text-padi-700" />
-                Field Zone Matrix — {info.name}
-              </CardTitle>
-              <div className="flex gap-2 flex-wrap">
-                <Badge variant="padi" className="gap-1">
-                  <Satellite className="h-3 w-3" /> {recommendation.rows}×{recommendation.cols} zones
-                </Badge>
-                <Badge
-                  variant={recommendation.severity === "critical" ? "attention" : recommendation.severity === "moderate" ? "moderate" : "healthy"}
-                >
-                  {recommendation.severity}
-                </Badge>
-              </div>
-            </div>
-            <p className="text-sm text-slate-500 mt-1">
-              AI-drawn matrix clipped to <strong>your actual drawn field shape</strong>. Each cell shows the real {info.name} value
-              measured by Sentinel-2 — colour-coded from Critical → Low → Moderate → Optimal.
-            </p>
+        <Card className="overflow-hidden">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <LayoutGrid className="h-4 w-4 text-padi-700" />
+              Zone Action Matrix (4x4)
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <FieldMatrixViz
-              fieldPolygon={recommendation.field_polygon}
-              zoneStat={recommendation.zone_stats ?? []}
-              zonesMatrix={recommendation.zones_matrix}
-              rows={recommendation.rows ?? 4}
-              cols={recommendation.cols ?? 4}
-              indexName={recommendation.index_name ?? info.name}
-              indexMin={recommendation.index_min ?? 0}
-              indexMax={recommendation.index_max ?? 1}
-              indexPalette={recommendation.index_palette ?? ["#7f1d1d", "#eab308", "#15803d"]}
-              showExport
-            />
+            <div className="grid grid-cols-4 gap-2">
+              {Array.from({ length: 16 }).map((_, i) => {
+                const r = Math.floor(i / 4);
+                const c = i % 4;
+                const zone = recommendation.zones_matrix.find(z => z.row === r && z.col === c);
+                
+                if (!zone) return <div key={i} className="p-3 rounded-lg border border-slate-100 bg-slate-50" />;
+
+                const isAttention = zone.status === "attention";
+
+                return (
+                  <div 
+                    key={i} 
+                    className={cn(
+                      "p-3 rounded-lg border flex flex-col gap-1 text-[11px]",
+                      isAttention 
+                        ? "bg-rose-50 border-rose-200" 
+                        : "bg-emerald-50 border-emerald-200"
+                    )}
+                  >
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="font-semibold opacity-70">R{r}, C{c}</span>
+                      <span className={cn(
+                        "w-2 h-2 rounded-full",
+                        isAttention ? "bg-rose-500" : "bg-emerald-500"
+                      )} />
+                    </div>
+                    <span className={cn(
+                      "font-medium leading-tight",
+                      isAttention ? "text-rose-800" : "text-emerald-800"
+                    )}>
+                      {zone.action_needed}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
           </CardContent>
         </Card>
       )}

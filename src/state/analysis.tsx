@@ -6,16 +6,17 @@ import type {
   FarmImage,
   FarmView,
   OptimizationState,
+  OptimizationResult,
 } from "@/types";
 import { fetchFarmView } from "@/services/farmView";
 import { fetchFarmImage } from "@/services/farmImage";
 import { streamOptimization } from "@/services/optimize";
+import { useTranslation } from "react-i18next";
 
 const AGENT_ORDER: AgentKey[] = [
-  "diagnosis",
-  "water_optimizer",
-  "nutrient_optimizer",
-  "roi",
+  "visual_analyst",
+  "diagnostic_agronomist",
+  "action_planner",
 ];
 
 function makeIdleAgents(): Record<AgentKey, AgentCardState> {
@@ -38,12 +39,16 @@ export interface AnalysisRecord {
   geometry: PolygonGeometry;
   result: AnalyzeResponse;
   label?: string;
+  optimizationResult?: OptimizationResult | null;
 }
 
 interface Ctx {
   current: AnalysisRecord | null;
   setCurrent: (rec: AnalysisRecord | null) => void;
   clear: () => void;
+  history: AnalysisRecord[];
+  removeFromHistory: (id: string) => void;
+  clearHistory: () => void;
   farmView: FarmView | null;
   farmViewLoading: boolean;
   farmViewError: string | null;
@@ -61,6 +66,8 @@ const AnalysisContext = React.createContext<Ctx | undefined>(undefined);
 
 const STORAGE_KEY = "padiwatch.analysis.current";
 const FARM_VIEW_KEY = "padiwatch.analysis.farmView";
+const HISTORY_KEY = "padiwatch.analysis.history";
+const HISTORY_LIMIT = 50;
 
 function loadInitial(): AnalysisRecord | null {
   if (typeof window === "undefined") return null;
@@ -70,6 +77,18 @@ function loadInitial(): AnalysisRecord | null {
     return JSON.parse(raw) as AnalysisRecord;
   } catch {
     return null;
+  }
+}
+
+function loadHistoryInitial(): AnalysisRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(HISTORY_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? (parsed as AnalysisRecord[]) : [];
+  } catch {
+    return [];
   }
 }
 
@@ -85,6 +104,7 @@ function loadFarmViewInitial(): FarmView | null {
 }
 
 export function AnalysisProvider({ children }: { children: React.ReactNode }) {
+  const { i18n } = useTranslation();
   const [current, setCurrentState] = React.useState<AnalysisRecord | null>(
     () => loadInitial()
   );
@@ -94,17 +114,26 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
   const [farmViewLoading, setFarmViewLoading] = React.useState(false);
   const [farmViewError, setFarmViewError] = React.useState<string | null>(null);
 
-  // The Nano Banana image is large (~hundreds of KB) so we keep it in
-  // memory only. A page reload requires re-clicking "Generate".
   const [farmImage, setFarmImage] = React.useState<FarmImage | null>(null);
   const [farmImageLoading, setFarmImageLoading] = React.useState(false);
   const [farmImageError, setFarmImageError] = React.useState<string | null>(null);
 
-  // Optimization state is kept in memory only — the SSE stream is re-run
-  // whenever the user clicks Generate.
   const [optimization, setOptimization] = React.useState<OptimizationState>(
     () => makeIdleOptimization()
   );
+
+  const [history, setHistoryState] = React.useState<AnalysisRecord[]>(
+    () => loadHistoryInitial()
+  );
+
+  const persistHistory = React.useCallback((next: AnalysisRecord[]) => {
+    setHistoryState(next);
+    if (next.length === 0) {
+      window.localStorage.removeItem(HISTORY_KEY);
+    } else {
+      window.localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+    }
+  }, []);
 
   const setFarmView = React.useCallback((fv: FarmView | null) => {
     setFarmViewState(fv);
@@ -114,24 +143,53 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       window.localStorage.removeItem(FARM_VIEW_KEY);
     }
   }, []);
+const setCurrent = React.useCallback(
+  (rec: AnalysisRecord | null) => {
+    setCurrentState(rec);
+    if (rec) {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rec));
+      setHistoryState((prev) => {
+        const filtered = prev.filter((h) => h.id !== rec.id);
+        const next = [rec, ...filtered].slice(0, HISTORY_LIMIT);
+        window.localStorage.setItem(HISTORY_KEY, JSON.stringify(next));
+        return next;
+      });
 
-  const setCurrent = React.useCallback(
-    (rec: AnalysisRecord | null) => {
-      setCurrentState(rec);
-      if (rec) {
-        window.localStorage.setItem(STORAGE_KEY, JSON.stringify(rec));
+      // Restore optimization state if it exists in the record
+      if (rec.optimizationResult) {
+        setOptimization({
+          status: "done",
+          agents: makeIdleAgents(), // Agents individual card states aren't persisted, but the final result is
+          finalResult: rec.optimizationResult,
+          areaHa: rec.result.areaHa,
+          imageDate: rec.result.imageDate,
+        });
       } else {
-        window.localStorage.removeItem(STORAGE_KEY);
+        setOptimization(makeIdleOptimization());
       }
-      // Any new analysis invalidates the previous farm view + image.
-      setFarmView(null);
-      setFarmViewError(null);
-      setFarmImage(null);
-      setFarmImageError(null);
+    } else {
+      window.localStorage.removeItem(STORAGE_KEY);
       setOptimization(makeIdleOptimization());
+    }
+    setFarmView(null);
+    setFarmViewError(null);
+    setFarmImage(null);
+    setFarmImageError(null);
+  },
+  [setFarmView]
+);
+
+
+  const removeFromHistory = React.useCallback(
+    (id: string) => {
+      persistHistory(history.filter((h) => h.id !== id));
     },
-    [setFarmView]
+    [history, persistHistory]
   );
+
+  const clearHistory = React.useCallback(() => {
+    persistHistory([]);
+  }, [persistHistory]);
 
   const clear = React.useCallback(() => {
     setCurrent(null);
@@ -147,7 +205,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       setFarmViewLoading(true);
       setFarmViewError(null);
       try {
-        const fv = await fetchFarmView(geometry);
+        const fv = await fetchFarmView(geometry, { language: i18n.language });
         setFarmView(fv);
       } catch (err) {
         setFarmViewError(
@@ -166,10 +224,8 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       setFarmImageLoading(true);
       setFarmImageError(null);
       try {
-        const fi = await fetchFarmImage(geometry);
+        const fi = await fetchFarmImage(geometry, { language: i18n.language });
         setFarmImage(fi);
-        // The image endpoint also returns zone data — populate farmView
-        // so the labelled mini-map and other consumers get the latest.
         setFarmView({ zones: fi.zones, overallSummary: fi.overallSummary });
       } catch (err) {
         setFarmImageError(
@@ -190,6 +246,10 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
   const runOptimization = React.useCallback(
     async (geometry: PolygonGeometry) => {
       const startedAt = Date.now();
+      const opts = current?.result.window 
+        ? { startDate: current.result.window.start, endDate: current.result.window.end, language: i18n.language }
+        : { language: i18n.language };
+
       setOptimization({
         status: "preparing",
         agents: makeIdleAgents(),
@@ -197,7 +257,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       });
 
       try {
-        await streamOptimization(geometry, {}, (event) => {
+        await streamOptimization(geometry, opts, (event) => {
           setOptimization((prev) => {
             const agents = { ...prev.agents };
             const next: OptimizationState = { ...prev, agents };
@@ -274,6 +334,21 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
               case "final":
                 next.status = "done";
                 next.finalResult = event.result;
+                
+                // --- UPDATE HISTORY WITH OPTIMIZATION RESULTS ---
+                setHistoryState((prevH) => {
+                  const updated = prevH.map((h) => 
+                    h.id === current?.id ? { ...h, optimizationResult: event.result } : h
+                  );
+                  window.localStorage.setItem(HISTORY_KEY, JSON.stringify(updated));
+                  return updated;
+                });
+                if (current) {
+                  const updatedCurrent = { ...current, optimizationResult: event.result };
+                  setCurrentState(updatedCurrent);
+                  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCurrent));
+                }
+                // -------------------------------------------------
                 break;
               case "run_failed":
                 next.status = "error";
@@ -291,7 +366,7 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
         }));
       }
     },
-    []
+    [current]
   );
 
   const value = React.useMemo(
@@ -299,6 +374,9 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       current,
       setCurrent,
       clear,
+      history,
+      removeFromHistory,
+      clearHistory,
       farmView,
       farmViewLoading,
       farmViewError,
@@ -315,6 +393,9 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
       current,
       setCurrent,
       clear,
+      history,
+      removeFromHistory,
+      clearHistory,
       farmView,
       farmViewLoading,
       farmViewError,

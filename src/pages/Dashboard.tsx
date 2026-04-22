@@ -4,8 +4,11 @@ import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { IndexGallery } from "@/components/dashboard/IndexGallery";
 import { AnalysisBanner } from "@/components/dashboard/AnalysisBanner";
 import { FarmImageView } from "@/components/visuals/FarmImageView";
+import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
+  const { t } = useTranslation();
+
   return (
     <div className="flex flex-col gap-6">
       <AnalysisBanner />
@@ -16,10 +19,10 @@ export default function Dashboard() {
         <div className="flex items-end justify-between">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">
-              Field health at a glance
+              {t("dashboard.healthAtGlance", "Field health at a glance")}
             </h2>
             <p className="text-sm text-slate-500">
-              Four headline signals summarised from today's satellite indices.
+              {t("dashboard.headlineSignals", "Four headline signals summarised from today's satellite indices.")}
             </p>
           </div>
         </div>
@@ -35,17 +38,16 @@ export default function Dashboard() {
           <summary className="flex cursor-pointer list-none items-center justify-between gap-3">
             <div>
               <h2 className="text-base font-semibold text-slate-900">
-                Show raw index details
+                {t("dashboard.showRawDetails", "Show raw index details")}
               </h2>
               <p className="text-xs text-slate-500">
-                The four satellite indices (NDVI, NDRE, LSWI, GCI) behind the
-                bird's-eye view. Useful if you want the raw signal.
+                {t("dashboard.rawDetailsDesc", "The four satellite indices (NDVI, NDRE, LSWI, GCI) behind the bird's-eye view. Useful if you want the raw signal.")}
               </p>
 
             </div>
             <span className="rounded-full bg-slate-100 px-2 py-1 text-xs font-medium text-slate-600 group-open:bg-padi-100 group-open:text-padi-700">
-              <span className="group-open:hidden">Expand</span>
-              <span className="hidden group-open:inline">Collapse</span>
+              <span className="group-open:hidden">{t("common.expand", "Expand")}</span>
+              <span className="hidden group-open:inline">{t("common.collapse", "Collapse")}</span>
             </span>
           </summary>
           <div className="mt-4">

@@ -3,13 +3,14 @@ import type { PolygonGeometry } from "@/services/gee";
 
 const DEFAULT_BASE =
   (import.meta.env.VITE_API_BASE as string | undefined) ??
-  "http://localhost:8000";
+  (import.meta.env.PROD ? "" : "http://localhost:8000");
 
 export interface StreamOptions {
   startDate?: string;
   endDate?: string;
   baseUrl?: string;
   signal?: AbortSignal;
+  language?: string;
 }
 
 export async function streamOptimization(
@@ -25,6 +26,7 @@ export async function streamOptimization(
       geometry,
       start_date: opts.startDate ?? null,
       end_date: opts.endDate ?? null,
+      language: opts.language ?? "en",
     }),
     signal: opts.signal,
   });

@@ -19,7 +19,7 @@ import gee
 
 GRID_ROWS = 4
 GRID_COLS = 4
-MODEL_NAME = "gemini-2.5-pro"
+MODEL_NAME = "gemini-1.5-flash-002"
 
 _initialized = False
 
@@ -173,9 +173,17 @@ def _build_context_text(
     return "\n".join(lines)
 
 
-def analyze_zones(scene: gee.Scene) -> dict[str, Any]:
+def analyze_zones(scene: gee.Scene, language: str = "en") -> dict[str, Any]:
     """Render the four index PNGs + numeric stats, then ask Gemini for zone advice."""
     _init()
+
+    lang_map = {
+        "en": "English",
+        "ms": "Bahasa Malaysia",
+        "zh": "Mandarin Chinese",
+        "ta": "Tamil"
+    }
+    target_lang = lang_map.get(language, "English")
 
     indices = gee.build_indices(scene.composite)
     zones_fc = gee.build_zone_grid(scene.geom, GRID_ROWS, GRID_COLS)
@@ -199,8 +207,10 @@ def analyze_zones(scene: gee.Scene) -> dict[str, Any]:
 
     context_text = _build_context_text(field_means, zone_means)
 
+    language_instruction = f"\n\nIMPORTANT: You must provide all text fields (overall_summary, issue, tip) in {target_lang}."
+
     parts: list[Part] = [
-        Part.from_text(_INSTRUCTIONS),
+        Part.from_text(_INSTRUCTIONS + language_instruction),
         Part.from_text("\n" + context_text + "\n\n(A) INDEX IMAGES (north up):"),
     ]
     for key, cfg in gee.INDEX_CONFIG.items():
