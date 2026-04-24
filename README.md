@@ -3,6 +3,17 @@
 > **MY AI Future Hackathon Project**
 > Empowering smallholder rice farmers with satellite imagery and multi-agent AI to monitor, diagnose, and act — in their own language.
 
+**Team Name:**
+SevenAteNine
+
+**Team Members:**
+-Muhammad Izzul Danish bin Abdul Rasib (SW01083596)
+-Mohd Adli Syukri bin Noraman (SW01083745)
+-Muhammad Irfan Azraei bin Izhar Kamil (SW01083594)
+-Muhammad Yasin bin Shahrozaini (CS01083764)
+
+![PadiWatch Interface](URL_OR_PATH_TO_IMAGE)
+
 ---
 
 ## Table of Contents
@@ -566,6 +577,8 @@ Gemini prompts are dynamically constructed with the selected language, so recomm
 **Theme:** Leveraging AI for national impact
 
 PadiWatch directly addresses Malaysia's food security by equipping the ~200,000 paddy farming households — who contribute to the national rice supply — with AI tools previously only available to large agribusinesses and government agencies.
+
+
 
 **Key differentiators for the hackathon:**
 - End-to-end Google Cloud AI stack (GEE + Vertex AI + ADK)
