@@ -3,7 +3,7 @@ import { ImageDateBanner } from "@/components/dashboard/ImageDateBanner";
 import { SummaryCardGrid } from "@/components/dashboard/SummaryCardGrid";
 import { IndexGallery } from "@/components/dashboard/IndexGallery";
 import { AnalysisBanner } from "@/components/dashboard/AnalysisBanner";
-import { FarmImageView } from "@/components/visuals/FarmImageView";
+
 import { useTranslation } from "react-i18next";
 
 export default function Dashboard() {
@@ -29,9 +29,6 @@ export default function Dashboard() {
         <SummaryCardGrid />
       </section>
 
-      <section className="flex flex-col gap-3">
-        <FarmImageView />
-      </section>
 
       <section className="flex flex-col gap-3">
         <details className="group rounded-2xl bg-white p-4 ring-1 ring-slate-200/80 shadow-soft open:pb-5">

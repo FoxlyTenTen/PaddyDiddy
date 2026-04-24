@@ -104,9 +104,23 @@ export default function Optimize() {
       {done && imageB64 && (
         <div className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
           <div className="flex flex-col gap-3">
-             <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">
-                <Activity className="h-3.5 w-3.5 text-padi-600" />
-                Annotated Field View
+             <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-widest text-slate-500">
+                   <Activity className="h-3.5 w-3.5 text-padi-600" />
+                   Annotated Field View
+                </div>
+                {result?.health_score !== undefined && (
+                   <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 ring-1 ring-slate-200">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">Field Health Score</span>
+                      <span className={cn(
+                         "text-xs font-black",
+                         result.health_score > 70 ? "text-emerald-600" :
+                         result.health_score > 40 ? "text-amber-600" : "text-rose-600"
+                      )}>
+                         {result.health_score}/100
+                      </span>
+                   </div>
+                )}
              </div>
              <div className="relative overflow-hidden rounded-3xl bg-slate-950 ring-1 ring-slate-200 shadow-xl group">
                 <img 
@@ -117,9 +131,8 @@ export default function Optimize() {
                 <div className="absolute top-4 right-4 rounded-full bg-black/60 backdrop-blur-md px-3 py-1 text-[10px] font-bold text-white ring-1 ring-white/20">
                    Satellite-Grounded View
                 </div>
-             </div>
-          </div>
-
+                </div>
+                </div>
           <div className="flex flex-col gap-6">
              {actionPlan && (
                <div className="flex flex-col gap-4">

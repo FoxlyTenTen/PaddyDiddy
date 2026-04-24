@@ -19,7 +19,7 @@ from vertexai.generative_models import (  # type: ignore
 import gee
 
 
-MODEL_NAME = "gemini-2.5-pro"
+MODEL_NAME = "gemini-2.5-flash"
 
 _initialized = False
 
@@ -52,7 +52,7 @@ _RESPONSE_SCHEMA = {
     "properties": {
         "headline": {
             "type": "string",
-            "description": "One short sentence a farmer can read at a glance.",
+            "description": "One VERY simple, easy to understand sentence for a farmer. Maximum 15 words. Just explain what is happening on the farm based on the image.",
         },
         "severity": {
             "type": "string",
@@ -278,7 +278,7 @@ Look at the image and the zone data. Note WHERE the problem spots are (north/sou
 west, or patchy, or uniform). Integrate that with the numeric value.
 
 Return a JSON object with:
-  - headline: one actionable sentence.
+  - headline: one VERY simple, one-line explanation of what is happening on the farm. Use easy words. No technical jargon. Maximum 15 words.
   - severity: 'healthy' if the field looks fine; 'moderate' if the mean
     is in the moderate band OR the image shows a localised issue;
     'critical' if the field-mean is below the moderate threshold.
@@ -295,8 +295,8 @@ Return a JSON object with:
   - zones_matrix: A list of exactly 16 zones (row 0-3, col 0-3) showing if action is needed.
 
 Keep language at a Form-3 reading level. No technical index names in the
-whats_happening or prevention_steps — use words like "greenness",
-"moisture", "leaf nitrogen" instead.
+headline, whats_happening or prevention_steps — use words like "greenness",
+"moisture", "leaf nitrogen" instead. The headline must be a single, clear line.
 
 IMPORTANT: All text fields (headline, whats_happening, likely_causes, action, when, why, simple_explanation, action_needed) MUST be in {target_lang}."""
 

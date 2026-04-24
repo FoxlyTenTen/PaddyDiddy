@@ -19,7 +19,7 @@ import gee
 
 GRID_ROWS = 4
 GRID_COLS = 4
-MODEL_NAME = "gemini-1.5-flash-002"
+MODEL_NAME = "gemini-2.5-flash"
 
 _initialized = False
 

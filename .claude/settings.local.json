@@ -26,7 +26,12 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:googleapis.github.io)",
       "Read(//c/Users/mohda/.claude/skills/**)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)",
+      "Bash(git stash *)",
+      "Bash(git push *)"
     ]
   }
 }

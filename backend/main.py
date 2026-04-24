@@ -5,6 +5,8 @@ from __future__ import annotations
 import base64
 import logging
 import os
+import uuid
+from datetime import datetime
 from typing import Any, Literal
 
 import requests
@@ -31,7 +33,7 @@ os.environ.setdefault("GOOGLE_GENAI_USE_VERTEXAI", "True")
 
 import gee  # noqa: E402
 import vertex_analyze  # noqa: E402
-import vertex_image  # noqa: E402
+
 from optimization_stream import run_optimization_stream  # noqa: E402
 
 FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
@@ -39,7 +41,7 @@ FRONTEND_ORIGIN = os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")
 app = FastAPI(
     title="PadiWatch GEE Service",
     description="Computes satellite vegetation indices for a user-drawn paddy field polygon.",
-    version="0.1.0",
+version="0.1.0",
 )
 
 app.add_middleware(
@@ -114,19 +116,6 @@ class FarmViewResponse(BaseModel):
     overallSummary: str
 
 
-class FarmImageCaption(BaseModel):
-    row: int
-    col: int
-    text: str
-    severity: Literal["info", "warning", "critical"]
-
-
-class FarmImageResponse(BaseModel):
-    imageBase64: str
-    mimeType: str
-    overallSummary: str
-    captions: list[FarmImageCaption]
-    zones: list[ZoneAnalysis]
 
 
 # ---------------------------------------------------------------------------
@@ -187,72 +176,6 @@ def farm_view(req: AnalyzeRequest) -> FarmViewResponse:
     return FarmViewResponse(**payload)
 
 
-def _captions_from_zones(zones: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    out: list[dict[str, Any]] = []
-    for z in zones:
-        health = z.get("health", "good")
-        water = z.get("water", "ok")
-        if health == "good" and water == "ok":
-            continue
-        text = (z.get("issue") or z.get("tip") or "Needs attention").strip()
-        if len(text) > 80:
-            text = text[:77] + "…"
-        severity = "critical" if health == "poor" else "warning"
-        out.append(
-            {
-                "row": int(z["row"]),
-                "col": int(z["col"]),
-                "text": text,
-                "severity": severity,
-            }
-        )
-    return out
-
-
-@app.post("/api/farm-image", response_model=FarmImageResponse)
-def farm_image(req: AnalyzeRequest) -> FarmImageResponse:
-    try:
-        scene = gee.prepare_scene(
-            req.geometry.model_dump(), req.start_date, req.end_date
-        )
-    except RuntimeError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(
-            status_code=500,
-            detail=f"Earth Engine request failed: {exc.__class__.__name__}: {exc}",
-        )
-
-    try:
-        zone_payload = vertex_analyze.analyze_zones(scene, language=req.language)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(
-            status_code=502,
-            detail=f"Zone analysis failed: {exc.__class__.__name__}: {exc}",
-        )
-
-    zones = zone_payload.get("zones", [])
-    summary = zone_payload.get("overallSummary", "")
-
-    try:
-        png_bytes = vertex_image.generate_farm_image(scene, zones, summary)
-    except RuntimeError as exc:
-        raise HTTPException(status_code=502, detail=str(exc))
-    except Exception as exc:  # noqa: BLE001
-        raise HTTPException(
-            status_code=502,
-            detail=f"Nano Banana request failed: {exc.__class__.__name__}: {exc}",
-        )
-
-    return FarmImageResponse(
-        imageBase64=base64.b64encode(png_bytes).decode("ascii"),
-        mimeType="image/png",
-        overallSummary=summary,
-        captions=[FarmImageCaption(**c) for c in _captions_from_zones(zones)],
-        zones=[ZoneAnalysis(**z) for z in zones],
-    )
 
 
 class RecommendRequest(AnalyzeRequest):

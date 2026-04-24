@@ -36,3 +36,6 @@ gcp-service-account.json
 .vscode/*
 !.vscode/extensions.json
 .idea/
+
+.claude
+.gemini

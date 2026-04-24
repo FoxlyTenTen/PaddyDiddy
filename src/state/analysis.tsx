@@ -3,13 +3,11 @@ import type { AnalyzeResponse, PolygonGeometry } from "@/services/gee";
 import type {
   AgentCardState,
   AgentKey,
-  FarmImage,
   FarmView,
   OptimizationState,
   OptimizationResult,
 } from "@/types";
 import { fetchFarmView } from "@/services/farmView";
-import { fetchFarmImage } from "@/services/farmImage";
 import { streamOptimization } from "@/services/optimize";
 import { useTranslation } from "react-i18next";
 
@@ -53,10 +51,6 @@ interface Ctx {
   farmViewLoading: boolean;
   farmViewError: string | null;
   loadFarmView: (geometry: PolygonGeometry) => Promise<void>;
-  farmImage: FarmImage | null;
-  farmImageLoading: boolean;
-  farmImageError: string | null;
-  loadFarmImage: (geometry: PolygonGeometry) => Promise<void>;
   optimization: OptimizationState;
   runOptimization: (geometry: PolygonGeometry) => Promise<void>;
   resetOptimization: () => void;
@@ -114,10 +108,6 @@ export function AnalysisProvider({ children }: { children: React.ReactNode }) {
   const [farmViewLoading, setFarmViewLoading] = React.useState(false);
   const [farmViewError, setFarmViewError] = React.useState<string | null>(null);
 
-  const [farmImage, setFarmImage] = React.useState<FarmImage | null>(null);
-  const [farmImageLoading, setFarmImageLoading] = React.useState(false);
-  const [farmImageError, setFarmImageError] = React.useState<string | null>(null);
-
   const [optimization, setOptimization] = React.useState<OptimizationState>(
     () => makeIdleOptimization()
   );
@@ -173,8 +163,6 @@ const setCurrent = React.useCallback(
     }
     setFarmView(null);
     setFarmViewError(null);
-    setFarmImage(null);
-    setFarmImageError(null);
   },
   [setFarmView]
 );
@@ -195,8 +183,6 @@ const setCurrent = React.useCallback(
     setCurrent(null);
     setFarmView(null);
     setFarmViewError(null);
-    setFarmImage(null);
-    setFarmImageError(null);
     setOptimization(makeIdleOptimization());
   }, [setCurrent, setFarmView]);
 
@@ -214,26 +200,6 @@ const setCurrent = React.useCallback(
         setFarmView(null);
       } finally {
         setFarmViewLoading(false);
-      }
-    },
-    [setFarmView]
-  );
-
-  const loadFarmImage = React.useCallback(
-    async (geometry: PolygonGeometry) => {
-      setFarmImageLoading(true);
-      setFarmImageError(null);
-      try {
-        const fi = await fetchFarmImage(geometry, { language: i18n.language });
-        setFarmImage(fi);
-        setFarmView({ zones: fi.zones, overallSummary: fi.overallSummary });
-      } catch (err) {
-        setFarmImageError(
-          err instanceof Error ? err.message : "Farm image request failed"
-        );
-        setFarmImage(null);
-      } finally {
-        setFarmImageLoading(false);
       }
     },
     [setFarmView]
@@ -381,10 +347,6 @@ const setCurrent = React.useCallback(
       farmViewLoading,
       farmViewError,
       loadFarmView,
-      farmImage,
-      farmImageLoading,
-      farmImageError,
-      loadFarmImage,
       optimization,
       runOptimization,
       resetOptimization,
@@ -400,10 +362,6 @@ const setCurrent = React.useCallback(
       farmViewLoading,
       farmViewError,
       loadFarmView,
-      farmImage,
-      farmImageLoading,
-      farmImageError,
-      loadFarmImage,
       optimization,
       runOptimization,
       resetOptimization,

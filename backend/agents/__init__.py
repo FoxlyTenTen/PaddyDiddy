@@ -1,12 +1,9 @@
-"""ADK multi-agent system for paddy resource optimization.
+"""ADK multi-agent system for paddy resource optimization (Image-First approach).
 
 Agents:
-  - DiagnosisAgent (custom BaseAgent) — wraps the existing
-    vertex_analyze.analyze_zones() so we don't pay for a redundant LLM call.
-  - WaterOptimizer (LlmAgent) — uses Google Maps Weather API tool.
-  - NutrientOptimizer (LlmAgent) — variable-rate fertilizer plan.
-  - RoiAgent (LlmAgent w/ Pydantic output_schema) — total RM saved.
+  - Visual Analyst: Uses satellite indices to identify problem zones.
+  - Diagnostic Agronomist: Diagnoses root causes (e.g., Drought, Nutrients) using indices and weather data.
+  - Action Planner: Generates a prioritized, farmer-friendly checklist in the target language.
 
-Composed by orchestrator.create_root_agent() as
-SequentialAgent(Diagnosis -> ParallelAgent(Water, Nutrient) -> Roi).
+Composed by orchestrator.create_root_agent() as a SequentialAgent.
 """

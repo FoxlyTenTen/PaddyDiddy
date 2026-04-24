@@ -63,6 +63,8 @@ export interface OptimizationResult {
   diagnoses?: DiagnosisResult | null;
   action_plan?: ActionPlan | null;
   generated_image?: string | null; // Base64 image
+  health_score?: number;
+  session_id?: string;
   area_ha?: number;
   field_center?: { lat: number; lon: number };
 }
@@ -151,19 +153,3 @@ export interface FarmView {
   overallSummary: string;
 }
 
-export type FarmCaptionSeverity = "info" | "warning" | "critical";
-
-export interface FarmImageCaption {
-  row: number;
-  col: number;
-  text: string;
-  severity: FarmCaptionSeverity;
-}
-
-export interface FarmImage {
-  imageBase64: string;
-  mimeType: string;
-  overallSummary: string;
-  captions: FarmImageCaption[];
-  zones: ZoneAnalysis[];
-}

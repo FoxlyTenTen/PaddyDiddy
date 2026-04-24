@@ -17,7 +17,7 @@ from google.genai import types as genai_types
 import gee
 from agents.orchestrator import create_root_agent
 from agents.tools import polygon_centroid, register_scene, release_scene
-
+import base64
 
 log = logging.getLogger(__name__)
 
@@ -81,10 +81,15 @@ def _try_parse_json(raw: Any) -> Any:
     if not isinstance(raw, str):
         return raw
     s = raw.strip()
-    if s.startswith("```"):
-        s = s.strip("`")
-        if s.startswith("json"):
-            s = s[4:].strip()
+    
+    # Handle markdown code blocks
+    if "```" in s:
+        # Try to extract content between ```json and ``` or just ``` and ```
+        import re
+        match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", s)
+        if match:
+            s = match.group(1).strip()
+    
     if s and s[0] in "{[":
         try:
             return json.loads(s)
@@ -149,6 +154,12 @@ async def run_optimization_stream(
                 "session_id": session_id,
                 "field_center": field_center,
                 "area_ha": scene.area_ha,
+                "target_lang": target_lang,
+                # Pre-initialize these to avoid "Context variable not found" KeyErrors
+                # when subsequent agents are initialized by the Sequential runner.
+                "visual_analysis": None,
+                "diagnoses": None,
+                "action_plan": None,
             },
         )
         runner = Runner(
@@ -222,6 +233,18 @@ async def run_optimization_stream(
         )
         state = dict(final_session.state) if final_session else {}
 
+        # 1. Calculate Overall Health Score based on NDVI mean
+        health_score = 0
+        try:
+            indices = gee.build_indices(scene.composite)
+            ndvi_mean = gee.field_mean(indices["ndvi"], scene.geom, "ndvi")
+            if ndvi_mean is not None:
+                # Scale NDVI (approx 0.1 to 0.9) to 0-100
+                health_score = round(max(0, min(100, (ndvi_mean - 0.1) / (0.9 - 0.1) * 100)))
+        except Exception:
+            log.exception("Failed to calculate health score")
+
+        # 2. Return the final result with image and reports
         yield _sse(
             {
                 "type": "final",
@@ -230,9 +253,11 @@ async def run_optimization_stream(
                     "visual_analysis": _try_parse_json(state.get("visual_analysis")),
                     "diagnoses": _try_parse_json(state.get("diagnoses")),
                     "action_plan": _try_parse_json(state.get("action_plan")),
-                    "generated_image": state.get("generated_farm_image"),
+                    "generated_image": state.get("generated_farm_image"), # Base64 string
+                    "health_score": health_score,
                     "area_ha": state.get("area_ha"),
                     "field_center": state.get("field_center"),
+                    "session_id": session_id
                 },
             }
         )

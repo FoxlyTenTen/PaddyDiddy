@@ -1,13 +1,17 @@
+import * as React from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpRight, CalendarDays, Satellite } from "lucide-react";
+import { ArrowUpRight, CalendarDays, Satellite, Sparkles, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import type { IndexInfo, IndexStatus } from "@/types";
 import { IndexHeatmapSVG } from "@/components/visuals/IndexHeatmapSVG";
 import { IndexTileMap } from "@/components/map/IndexTileMap";
 import { useAnalysis } from "@/state/analysis";
 import { LegendBar } from "./LegendBar";
 import { cn } from "@/lib/utils";
+import { recommendIndex } from "@/services/gee";
+import { useTranslation } from "react-i18next";
 
 const STATUS_BADGE: Record<
   IndexStatus,
@@ -26,6 +30,10 @@ const HEALTH_BIAS: Record<IndexStatus, number> = {
 
 export function IndexCard({ info }: { info: IndexInfo }) {
   const { current } = useAnalysis();
+  const { i18n } = useTranslation();
+  const [loading, setLoading] = React.useState(false);
+  const [quickReport, setQuickReport] = React.useState<string | null>(null);
+
   const real = current?.result.indices.find((i) => i.key === info.key);
   const realStatus = (real?.status as IndexStatus | undefined) ?? info.status;
   const displayStatus = real ? realStatus : info.status;
@@ -35,6 +43,27 @@ export function IndexCard({ info }: { info: IndexInfo }) {
       ? `${info.name === "GCI" ? real.mean.toFixed(1) : real.mean.toFixed(2)} avg`
       : "—"
     : info.metric;
+
+  const handleQuickReport = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (!current?.geometry || loading) return;
+    
+    setLoading(true);
+    try {
+      const res = await recommendIndex(current.geometry, info.key, {
+        startDate: current.result.window.start,
+        endDate: current.result.window.end,
+        language: i18n.language,
+      });
+      setQuickReport(res.headline);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <Link
@@ -101,6 +130,15 @@ export function IndexCard({ info }: { info: IndexInfo }) {
             <div className="absolute left-2 top-2 rounded-md bg-black/55 px-1.5 py-0.5 text-[10px] font-medium text-white backdrop-blur-sm">
               {displayMetric}
             </div>
+
+            {quickReport && (
+              <div className="absolute inset-x-0 bottom-0 bg-slate-900/90 px-3 py-2.5 text-[11px] leading-tight text-white backdrop-blur-md animate-in slide-in-from-bottom-full duration-300">
+                <div className="flex items-center gap-1.5 mb-1 text-[9px] uppercase tracking-wider text-padi-400 font-bold">
+                  <Sparkles className="h-3 w-3" /> Quick AI Report
+                </div>
+                {quickReport}
+              </div>
+            )}
           </div>
         </div>
 
@@ -112,9 +150,27 @@ export function IndexCard({ info }: { info: IndexInfo }) {
           <span className="inline-flex items-center gap-1.5 text-xs text-slate-500">
             <CalendarDays className="h-3.5 w-3.5" /> Image date {displayDate}
           </span>
-          <span className="text-xs font-medium text-padi-700 group-hover:underline">
-            View details →
-          </span>
+          <div className="flex items-center gap-2">
+            {real && !quickReport && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 gap-1.5 px-2 text-xs font-medium text-padi-700 hover:bg-padi-50 hover:text-padi-800"
+                onClick={handleQuickReport}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Sparkles className="h-3.5 w-3.5" />
+                )}
+                AI Report
+              </Button>
+            )}
+            <span className="text-xs font-medium text-padi-700 group-hover:underline">
+              View details →
+            </span>
+          </div>
         </div>
       </Card>
     </Link>

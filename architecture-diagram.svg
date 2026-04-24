@@ -1,0 +1,183 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 650" width="1200" height="650" font-family="Segoe UI, Arial, sans-serif">
+
+  <!-- Background -->
+  <rect width="1200" height="650" fill="#0f172a" rx="16"/>
+
+  <!-- Title -->
+  <text x="600" y="42" text-anchor="middle" font-size="22" font-weight="bold" fill="#f1f5f9">🌾 PadiWatch — Architecture</text>
+
+  <!-- ====== LAYER LABELS ====== -->
+  <text x="90" y="90" text-anchor="middle" font-size="11" fill="#94a3b8" font-weight="bold" letter-spacing="2">USER</text>
+  <text x="290" y="90" text-anchor="middle" font-size="11" fill="#94a3b8" font-weight="bold" letter-spacing="2">FRONTEND</text>
+  <text x="570" y="90" text-anchor="middle" font-size="11" fill="#94a3b8" font-weight="bold" letter-spacing="2">BACKEND</text>
+  <text x="820" y="90" text-anchor="middle" font-size="11" fill="#94a3b8" font-weight="bold" letter-spacing="2">AI AGENTS</text>
+  <text x="1080" y="90" text-anchor="middle" font-size="11" fill="#94a3b8" font-weight="bold" letter-spacing="2">GOOGLE CLOUD</text>
+
+  <!-- ====== USER ====== -->
+  <rect x="30" y="105" width="120" height="90" rx="12" fill="#1e293b" stroke="#ec4899" stroke-width="2"/>
+  <text x="90" y="145" text-anchor="middle" font-size="28">👨‍🌾</text>
+  <text x="90" y="170" text-anchor="middle" font-size="13" fill="#f1f5f9" font-weight="bold">Farmer</text>
+  <text x="90" y="186" text-anchor="middle" font-size="10" fill="#94a3b8">draws polygon</text>
+
+  <!-- Arrow User → Frontend -->
+  <line x1="152" y1="150" x2="178" y2="150" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- ====== FRONTEND BOX ====== -->
+  <rect x="178" y="100" width="224" height="360" rx="14" fill="#1e3a5f" stroke="#38bdf8" stroke-width="2"/>
+  <text x="290" y="125" text-anchor="middle" font-size="12" fill="#38bdf8" font-weight="bold">FRONTEND</text>
+
+  <!-- React -->
+  <rect x="198" y="135" width="184" height="60" rx="10" fill="#0c4a6e" stroke="#61dafb" stroke-width="1.5"/>
+  <text x="290" y="158" text-anchor="middle" font-size="18">⚛️</text>
+  <text x="290" y="176" text-anchor="middle" font-size="12" fill="#61dafb" font-weight="bold">React 18 + TypeScript</text>
+  <text x="290" y="190" text-anchor="middle" font-size="10" fill="#94a3b8">Vite · i18next (EN/MS/TA/ZH)</text>
+
+  <!-- Leaflet -->
+  <rect x="198" y="210" width="184" height="60" rx="10" fill="#0c4a6e" stroke="#93c88d" stroke-width="1.5"/>
+  <text x="290" y="233" text-anchor="middle" font-size="18">🗺️</text>
+  <text x="290" y="251" text-anchor="middle" font-size="12" fill="#93c88d" font-weight="bold">Leaflet.js</text>
+  <text x="290" y="265" text-anchor="middle" font-size="10" fill="#94a3b8">Map · Polygon Draw · Tile Overlay</text>
+
+  <!-- Tailwind -->
+  <rect x="198" y="285" width="184" height="60" rx="10" fill="#0c4a6e" stroke="#38bdf8" stroke-width="1.5"/>
+  <text x="290" y="308" text-anchor="middle" font-size="18">🎨</text>
+  <text x="290" y="326" text-anchor="middle" font-size="12" fill="#38bdf8" font-weight="bold">Tailwind CSS + shadcn/ui</text>
+  <text x="290" y="340" text-anchor="middle" font-size="10" fill="#94a3b8">Radix UI · Dashboard · Map View</text>
+
+  <!-- SSE -->
+  <rect x="198" y="360" width="184" height="55" rx="10" fill="#0c4a6e" stroke="#a78bfa" stroke-width="1.5"/>
+  <text x="290" y="385" text-anchor="middle" font-size="18">📡</text>
+  <text x="290" y="403" text-anchor="middle" font-size="12" fill="#a78bfa" font-weight="bold">SSE Stream Listener</text>
+  <text x="290" y="416" text-anchor="middle" font-size="10" fill="#94a3b8">Real-time agent thoughts</text>
+
+  <!-- Arrow Frontend → Backend -->
+  <line x1="403" y1="280" x2="428" y2="280" stroke="#6366f1" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="415" y="272" text-anchor="middle" font-size="9" fill="#94a3b8">HTTPS</text>
+
+  <!-- ====== BACKEND BOX ====== -->
+  <rect x="428" y="100" width="264" height="360" rx="14" fill="#2e1a47" stroke="#a855f7" stroke-width="2"/>
+  <text x="560" y="125" text-anchor="middle" font-size="12" fill="#a855f7" font-weight="bold">BACKEND</text>
+
+  <!-- FastAPI -->
+  <rect x="448" y="135" width="224" height="55" rx="10" fill="#1e1035" stroke="#009688" stroke-width="1.5"/>
+  <text x="560" y="158" text-anchor="middle" font-size="18">⚡</text>
+  <text x="560" y="176" text-anchor="middle" font-size="12" fill="#4db6ac" font-weight="bold">FastAPI · Python 3.12</text>
+  <text x="560" y="190" text-anchor="middle" font-size="10" fill="#94a3b8">Uvicorn · SSE · Cloud Run</text>
+
+  <!-- API routes -->
+  <rect x="448" y="205" width="224" height="235" rx="10" fill="#1e1035" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="560" y="225" text-anchor="middle" font-size="11" fill="#818cf8" font-weight="bold">API ENDPOINTS</text>
+  <text x="465" y="247" font-size="11" fill="#c7d2fe">POST  /api/analyze</text>
+  <text x="465" y="265" font-size="10" fill="#64748b">→ compute NDVI · NDRE · LSWI · GCI</text>
+  <text x="465" y="285" font-size="11" fill="#c7d2fe">POST  /api/optimize</text>
+  <text x="465" y="303" font-size="10" fill="#64748b">→ SSE stream · run AI agents</text>
+  <text x="465" y="323" font-size="11" fill="#c7d2fe">POST  /api/farm-image</text>
+  <text x="465" y="341" font-size="10" fill="#64748b">→ annotated bird's-eye image</text>
+  <text x="465" y="361" font-size="11" fill="#c7d2fe">POST  /api/recommend</text>
+  <text x="465" y="379" font-size="10" fill="#64748b">→ index-based recommendations</text>
+  <text x="465" y="399" font-size="11" fill="#c7d2fe">GET   /api/geocode</text>
+  <text x="465" y="417" font-size="10" fill="#64748b">→ location lookup proxy</text>
+
+  <!-- Arrow Backend → AI -->
+  <line x1="693" y1="240" x2="718" y2="240" stroke="#f97316" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="705" y="232" text-anchor="middle" font-size="9" fill="#94a3b8">Agents</text>
+
+  <!-- Arrow Backend → Cloud (data) -->
+  <line x1="693" y1="340" x2="958" y2="490" stroke="#34a853" stroke-width="1.5" stroke-dasharray="6,3" marker-end="url(#arrowGreen)"/>
+  <text x="820" y="432" text-anchor="middle" font-size="9" fill="#34a853">Satellite + Geocode</text>
+
+  <!-- ====== AI AGENTS BOX ====== -->
+  <rect x="718" y="100" width="220" height="330" rx="14" fill="#422006" stroke="#f97316" stroke-width="2"/>
+  <text x="828" y="125" text-anchor="middle" font-size="12" fill="#fb923c" font-weight="bold">AI AGENTS (ADK)</text>
+
+  <!-- ADK -->
+  <rect x="738" y="135" width="180" height="45" rx="10" fill="#2c1500" stroke="#fb923c" stroke-width="1.5"/>
+  <text x="828" y="155" text-anchor="middle" font-size="11" fill="#fb923c" font-weight="bold">Google ADK Framework</text>
+  <text x="828" y="170" text-anchor="middle" font-size="10" fill="#94a3b8">Sequential Multi-Agent</text>
+
+  <!-- Agent 1 -->
+  <rect x="738" y="195" width="180" height="65" rx="10" fill="#2c1500" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="828" y="214" text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="bold">1. Visual Analyst</text>
+  <text x="828" y="230" text-anchor="middle" font-size="10" fill="#94a3b8">Detects problem zones</text>
+  <text x="828" y="245" text-anchor="middle" font-size="10" fill="#94a3b8">NDVI/LSWI/GCI thresholds</text>
+  <text x="828" y="258" text-anchor="middle" font-size="10" fill="#64748b">fetch_field_indices · gen_image</text>
+
+  <!-- Arrow down -->
+  <line x1="828" y1="261" x2="828" y2="277" stroke="#f97316" stroke-width="2" marker-end="url(#arrowOrange)"/>
+  <text x="845" y="272" font-size="9" fill="#94a3b8">Zones</text>
+
+  <!-- Agent 2 -->
+  <rect x="738" y="278" width="180" height="65" rx="10" fill="#2c1500" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="828" y="297" text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="bold">2. Agronomist</text>
+  <text x="828" y="313" text-anchor="middle" font-size="10" fill="#94a3b8">Diagnoses root cause</text>
+  <text x="828" y="328" text-anchor="middle" font-size="10" fill="#94a3b8">Drought · Nutrients · Pests</text>
+  <text x="828" y="341" text-anchor="middle" font-size="10" fill="#64748b">Cross-index correlation</text>
+
+  <!-- Arrow down -->
+  <line x1="828" y1="344" x2="828" y2="360" stroke="#f97316" stroke-width="2" marker-end="url(#arrowOrange)"/>
+  <text x="845" y="355" font-size="9" fill="#94a3b8">Cause</text>
+
+  <!-- Agent 3 -->
+  <rect x="738" y="361" width="180" height="55" rx="10" fill="#2c1500" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="828" y="380" text-anchor="middle" font-size="11" fill="#fbbf24" font-weight="bold">3. Action Planner</text>
+  <text x="828" y="396" text-anchor="middle" font-size="10" fill="#94a3b8">Urgency-rated checklist</text>
+  <text x="828" y="410" text-anchor="middle" font-size="10" fill="#64748b">"Apply Urea — Today"</text>
+
+  <!-- Arrow AI → Vertex -->
+  <line x1="919" y1="270" x2="958" y2="290" stroke="#4285f4" stroke-width="2" marker-end="url(#arrowBlue)"/>
+  <text x="940" y="272" font-size="9" fill="#4285f4">LLM</text>
+
+  <!-- ====== GOOGLE CLOUD BOX ====== -->
+  <rect x="958" y="100" width="210" height="430" rx="14" fill="#052e16" stroke="#34a853" stroke-width="2"/>
+  <text x="1063" y="125" text-anchor="middle" font-size="12" fill="#4ade80" font-weight="bold">GOOGLE CLOUD</text>
+
+  <!-- Vertex AI -->
+  <rect x="978" y="135" width="170" height="75" rx="10" fill="#021d0e" stroke="#4285f4" stroke-width="1.5"/>
+  <text x="1063" y="158" text-anchor="middle" font-size="20">✨</text>
+  <text x="1063" y="176" text-anchor="middle" font-size="12" fill="#60a5fa" font-weight="bold">Vertex AI</text>
+  <text x="1063" y="191" text-anchor="middle" font-size="11" fill="#93c5fd">Gemini 2.5 Flash</text>
+  <text x="1063" y="205" text-anchor="middle" font-size="10" fill="#64748b">LLM for all 3 agents</text>
+
+  <!-- Earth Engine -->
+  <rect x="978" y="230" width="170" height="90" rx="10" fill="#021d0e" stroke="#34a853" stroke-width="1.5"/>
+  <text x="1063" y="255" text-anchor="middle" font-size="20">🛰️</text>
+  <text x="1063" y="275" text-anchor="middle" font-size="12" fill="#4ade80" font-weight="bold">Earth Engine</text>
+  <text x="1063" y="291" text-anchor="middle" font-size="10" fill="#86efac">Sentinel-2 · Landsat</text>
+  <text x="1063" y="307" text-anchor="middle" font-size="10" fill="#64748b">Cloud mask · Mean indices</text>
+  <text x="1063" y="320" text-anchor="middle" font-size="10" fill="#64748b">4×4 grid · Tile overlays</text>
+
+  <!-- Maps API -->
+  <rect x="978" y="340" width="170" height="70" rx="10" fill="#021d0e" stroke="#ea4335" stroke-width="1.5"/>
+  <text x="1063" y="363" text-anchor="middle" font-size="20">📍</text>
+  <text x="1063" y="383" text-anchor="middle" font-size="12" fill="#f87171" font-weight="bold">Maps API</text>
+  <text x="1063" y="398" text-anchor="middle" font-size="10" fill="#64748b">Geocoding · Location search</text>
+  <text x="1063" y="411" text-anchor="middle" font-size="10" fill="#64748b">Proxy via /api/geocode</text>
+
+  <!-- Cloud Run -->
+  <rect x="978" y="430" width="170" height="70" rx="10" fill="#021d0e" stroke="#fbbc04" stroke-width="1.5"/>
+  <text x="1063" y="453" text-anchor="middle" font-size="20">☁️</text>
+  <text x="1063" y="473" text-anchor="middle" font-size="12" fill="#fcd34d" font-weight="bold">Cloud Run</text>
+  <text x="1063" y="488" text-anchor="middle" font-size="10" fill="#64748b">Container · Serverless deploy</text>
+  <text x="1063" y="501" text-anchor="middle" font-size="10" fill="#64748b">FastAPI + Frontend (dist/)</text>
+
+  <!-- Result arrow back to Frontend -->
+  <path d="M 958 560 Q 290 600 290 470" stroke="#6366f1" stroke-width="2" fill="none" stroke-dasharray="8,4" marker-end="url(#arrow)"/>
+  <text x="600" y="595" text-anchor="middle" font-size="10" fill="#818cf8">← SSE Stream: Checklist · Image · Report</text>
+
+  <!-- ====== ARROW MARKERS ====== -->
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#6366f1"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#34a853"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#f97316"/>
+    </marker>
+    <marker id="arrowBlue" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#4285f4"/>
+    </marker>
+  </defs>
+
+</svg>
